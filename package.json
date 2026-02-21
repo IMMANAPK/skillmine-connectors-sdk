@@ -1,0 +1,26 @@
+{
+  "name": "@skillmine/connectors-sdk",
+  "version": "0.1.0",
+  "description": "Enterprise security tool connectors SDK by Skillmine Technology",
+  "main": "dist/index.js",
+  "module": "dist/index.mjs",
+  "types": "dist/index.d.ts",
+  "files": ["dist"],
+  "scripts": {
+    "build": "tsup",
+    "dev": "tsup --watch",
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": ["connectors", "security", "sdk", "qualys", "sentinelone"],
+  "author": "Skillmine Technology",
+  "license": "ISC",
+  "devDependencies": {
+    "@types/node": "^25.3.0",
+    "tsup": "^8.5.1",
+    "typescript": "^5.9.3"
+  },
+  "dependencies": {
+    "axios": "^1.13.5",
+    "zod": "^4.3.6"
+  }
+}

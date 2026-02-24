@@ -1,5 +1,5 @@
 // ============================================
-// WEBHOOK MANAGER - Skillmine Connectors SDK
+// WEBHOOK MANAGER - Complyment Connectors SDK
 // ============================================
 // Receive and process webhook events from
 // security tools (SentinelOne, Qualys, etc.)

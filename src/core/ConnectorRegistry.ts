@@ -1,5 +1,5 @@
 // ============================================
-// CONNECTOR REGISTRY - Skillmine Connectors SDK
+// CONNECTOR REGISTRY - Complyment Connectors SDK
 // ============================================
 
 import { BaseConnector } from './BaseConnector'

@@ -1,5 +1,5 @@
 // ============================================
-// CORE TYPES - Foundation of Skillmine SDK
+// CORE TYPES - Foundation of Complyment SDK
 // ============================================
 
 // Auth Types

@@ -1,5 +1,5 @@
 // ============================================
-// VERCEL AI ADAPTER - Skillmine Connectors SDK
+// VERCEL AI ADAPTER - Complyment Connectors SDK
 // ============================================
 // Convert connectors to Vercel AI SDK Tools
 // ============================================

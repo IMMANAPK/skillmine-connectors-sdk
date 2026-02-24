@@ -1,5 +1,5 @@
 // ============================================
-// ASSET SCHEMA - Skillmine Connectors SDK
+// ASSET SCHEMA - Complyment Connectors SDK
 // ============================================
 
 import { z } from 'zod'

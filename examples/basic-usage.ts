@@ -1,5 +1,5 @@
 // ============================================
-// BASIC USAGE - Skillmine Connectors SDK
+// BASIC USAGE - Complyment Connectors SDK
 // ============================================
 
 import {
@@ -20,7 +20,7 @@ import {
     SDK_VERSION,
 } from '../src'
 
-console.log(`@skillmine/connectors-sdk v${SDK_VERSION}`)
+console.log(`@skill-mine/complyment-connectors-sdk v${SDK_VERSION}`)
 
 // ============================================
 // 1. Setup Connectors
@@ -235,7 +235,7 @@ function vercelAIExample() {
 
 function mcpExample() {
     const mcp = new MCPServer({
-        name: 'skillmine-security-mcp',
+        name: 'complyment-security-mcp',
         version: '1.0.0',
     })
 

@@ -1,5 +1,5 @@
 // ============================================
-// HTTP UTILITY - Skillmine Connectors SDK
+// HTTP UTILITY - Complyment Connectors SDK
 // ============================================
 
 import axios, { AxiosInstance, AxiosRequestConfig } from 'axios'

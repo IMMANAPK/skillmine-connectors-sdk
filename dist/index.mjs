@@ -2344,7 +2344,7 @@ var logger = new Logger({
 var Tracer = class {
   constructor(options) {
     this.spans = /* @__PURE__ */ new Map();
-    this.serviceName = options?.serviceName ?? "skillmine-connectors-sdk";
+    this.serviceName = options?.serviceName ?? "complyment-connectors-sdk";
     this.serviceVersion = options?.serviceVersion ?? "1.0.0";
     this.enabled = options?.enabled ?? true;
     this.onSpanEnd = options?.onSpanEnd;
@@ -2446,7 +2446,7 @@ var Tracer = class {
   }
 };
 var tracer = new Tracer({
-  serviceName: "skillmine-connectors-sdk",
+  serviceName: "complyment-connectors-sdk",
   enabled: true
 });
 
@@ -3064,7 +3064,7 @@ var VaultHandler = class {
 
 // src/secrets/EnvHandler.ts
 var EnvHandler = class {
-  constructor(prefix = "SKILLMINE") {
+  constructor(prefix = "COMPLYMENT") {
     this.prefix = prefix;
   }
   // ============================================
@@ -3169,43 +3169,43 @@ var EnvHandler = class {
   // Get .env.example content
   // ============================================
   static getEnvExample() {
-    return `# Skillmine Connectors SDK - Environment Variables
+    return `# Complyment Connectors SDK - Environment Variables
 
 # Qualys
-SKILLMINE_QUALYS_BASE_URL=https://qualysapi.qualys.com
-SKILLMINE_QUALYS_USERNAME=your_username
-SKILLMINE_QUALYS_PASSWORD=your_password
+COMPLYMENT_QUALYS_BASE_URL=https://qualysapi.qualys.com
+COMPLYMENT_QUALYS_USERNAME=your_username
+COMPLYMENT_QUALYS_PASSWORD=your_password
 
 # SentinelOne
-SKILLMINE_SENTINELONE_BASE_URL=https://your-instance.sentinelone.net
-SKILLMINE_SENTINELONE_API_TOKEN=your_api_token
+COMPLYMENT_SENTINELONE_BASE_URL=https://your-instance.sentinelone.net
+COMPLYMENT_SENTINELONE_API_TOKEN=your_api_token
 
 # Checkpoint
-SKILLMINE_CHECKPOINT_BASE_URL=https://your-checkpoint-mgmt
-SKILLMINE_CHECKPOINT_USERNAME=admin
-SKILLMINE_CHECKPOINT_PASSWORD=your_password
-SKILLMINE_CHECKPOINT_DOMAIN=your_domain
+COMPLYMENT_CHECKPOINT_BASE_URL=https://your-checkpoint-mgmt
+COMPLYMENT_CHECKPOINT_USERNAME=admin
+COMPLYMENT_CHECKPOINT_PASSWORD=your_password
+COMPLYMENT_CHECKPOINT_DOMAIN=your_domain
 
 # ManageEngine
-SKILLMINE_MANAGEENGINE_BASE_URL=https://your-manageengine
-SKILLMINE_MANAGEENGINE_CLIENT_ID=your_client_id
-SKILLMINE_MANAGEENGINE_CLIENT_SECRET=your_client_secret
-SKILLMINE_MANAGEENGINE_REFRESH_TOKEN=your_refresh_token
+COMPLYMENT_MANAGEENGINE_BASE_URL=https://your-manageengine
+COMPLYMENT_MANAGEENGINE_CLIENT_ID=your_client_id
+COMPLYMENT_MANAGEENGINE_CLIENT_SECRET=your_client_secret
+COMPLYMENT_MANAGEENGINE_REFRESH_TOKEN=your_refresh_token
 
 # Jira
-SKILLMINE_JIRA_BASE_URL=https://your-org.atlassian.net
-SKILLMINE_JIRA_EMAIL=your@email.com
-SKILLMINE_JIRA_API_TOKEN=your_api_token
+COMPLYMENT_JIRA_BASE_URL=https://your-org.atlassian.net
+COMPLYMENT_JIRA_EMAIL=your@email.com
+COMPLYMENT_JIRA_API_TOKEN=your_api_token
 
 # Zoho
-SKILLMINE_ZOHO_BASE_URL=https://www.zohoapis.com
-SKILLMINE_ZOHO_CLIENT_ID=your_client_id
-SKILLMINE_ZOHO_CLIENT_SECRET=your_client_secret
-SKILLMINE_ZOHO_REFRESH_TOKEN=your_refresh_token
+COMPLYMENT_ZOHO_BASE_URL=https://www.zohoapis.com
+COMPLYMENT_ZOHO_CLIENT_ID=your_client_id
+COMPLYMENT_ZOHO_CLIENT_SECRET=your_client_secret
+COMPLYMENT_ZOHO_REFRESH_TOKEN=your_refresh_token
 `;
   }
 };
-var envHandler = new EnvHandler("SKILLMINE");
+var envHandler = new EnvHandler("COMPLYMENT");
 
 // src/webhook/WebhookManager.ts
 import { EventEmitter as EventEmitter3 } from "events";
@@ -3364,9 +3364,9 @@ var webhookManager = new WebhookManager({ maxHistory: 1e3 });
 var MCPServer = class {
   constructor(options) {
     this.tools = /* @__PURE__ */ new Map();
-    this.name = options?.name ?? "skillmine-connectors-mcp";
+    this.name = options?.name ?? "complyment-connectors-mcp";
     this.version = options?.version ?? "1.0.0";
-    this.description = options?.description ?? "Skillmine Connectors SDK MCP Server";
+    this.description = options?.description ?? "Complyment Connectors SDK MCP Server";
   }
   // ============================================
   // Register Tool
@@ -3539,9 +3539,9 @@ function createSentinelOneMCPTools(s1Connector) {
   ];
 }
 var mcpServer = new MCPServer({
-  name: "skillmine-connectors-mcp",
+  name: "complyment-connectors-mcp",
   version: "1.0.0",
-  description: "AI Agent interface for Skillmine security connectors"
+  description: "AI Agent interface for Complyment security connectors"
 });
 
 // src/ai/langchain/LangChainAdapter.ts
@@ -3714,6 +3714,38 @@ var LangChainAdapter = class {
         handler: async (input) => jiraConnector.getIssues(input)
       }),
       this.createTool({
+        name: "jira_create_issue",
+        description: "Create a new Jira issue.",
+        schema: {
+          type: "object",
+          properties: {
+            projectKey: { type: "string", description: "Jira project key" },
+            summary: { type: "string", description: "Issue summary" },
+            description: { type: "string", description: "Issue description" },
+            issueType: { type: "string", description: "Issue type (e.g., Bug, Task)" }
+          },
+          required: ["projectKey", "summary", "issueType"]
+        },
+        handler: async (input) => jiraConnector.createIssue(input)
+      }),
+      this.createTool({
+        name: "jira_update_issue",
+        description: "Update an existing Jira issue.",
+        schema: {
+          type: "object",
+          properties: {
+            issueKey: { type: "string", description: "The issue key (e.g., SEC-123)" },
+            summary: { type: "string", description: "Updated summary" },
+            priority: { type: "string", description: "Updated priority" }
+          },
+          required: ["issueKey"]
+        },
+        handler: async (input) => {
+          const { issueKey, ...rest } = input;
+          return jiraConnector.updateIssue(issueKey, rest);
+        }
+      }),
+      this.createTool({
         name: "jira_create_security_ticket",
         description: "Create a security ticket in Jira from a vulnerability or threat finding.",
         schema: {
@@ -3753,6 +3785,22 @@ var LangChainAdapter = class {
         handler: async (input) => jiraConnector.addComment(
           input["issueKey"],
           input["comment"]
+        )
+      }),
+      this.createTool({
+        name: "jira_transition_issue",
+        description: "Change the status of a Jira issue.",
+        schema: {
+          type: "object",
+          properties: {
+            issueKey: { type: "string", description: "Issue key e.g. SEC-123" },
+            transitionId: { type: "string", description: "Transition ID to apply" }
+          },
+          required: ["issueKey", "transitionId"]
+        },
+        handler: async (input) => jiraConnector.transitionIssue(
+          input["issueKey"],
+          input["transitionId"]
         )
       }),
       this.createTool({
@@ -3797,6 +3845,173 @@ var VercelAIAdapter = class {
    */
   static createToolkit(tools) {
     return tools;
+  }
+  /**
+   * Create Qualys-specific tools for Vercel AI SDK
+   */
+  static createQualysTools(qualysConnector) {
+    return {
+      qualys_get_assets: this.createTool({
+        description: "Fetch all IT assets and hosts from Qualys.",
+        parameters: {
+          type: "object",
+          properties: {
+            hostname: { type: "string" },
+            ipAddress: { type: "string" }
+          }
+        },
+        execute: async (args) => qualysConnector.getAssets(args)
+      }),
+      qualys_get_vulnerabilities: this.createTool({
+        description: "Get vulnerability scan results from Qualys.",
+        parameters: {
+          type: "object",
+          properties: {
+            severity: { type: "array", items: { type: "number" } },
+            status: { type: "string" }
+          }
+        },
+        execute: async (args) => qualysConnector.getVulnerabilities(args)
+      }),
+      qualys_get_critical_vulnerabilities: this.createTool({
+        description: "Get critical and high severity active vulnerabilities from Qualys.",
+        parameters: { type: "object", properties: {} },
+        execute: async () => qualysConnector.getCriticalVulnerabilities()
+      }),
+      qualys_get_scans: this.createTool({
+        description: "Get vulnerability scan history and status from Qualys.",
+        parameters: { type: "object", properties: {} },
+        execute: async (args) => qualysConnector.getScans(args)
+      }),
+      qualys_health_check: this.createTool({
+        description: "Check Qualys connector health.",
+        parameters: { type: "object", properties: {} },
+        execute: async () => qualysConnector.healthCheck()
+      })
+    };
+  }
+  /**
+   * Create SentinelOne-specific tools for Vercel AI SDK
+   */
+  static createSentinelOneTools(s1Connector) {
+    return {
+      sentinelone_get_agents: this.createTool({
+        description: "Get all endpoint agents from SentinelOne.",
+        parameters: {
+          type: "object",
+          properties: {
+            infected: { type: "boolean" }
+          }
+        },
+        execute: async (args) => s1Connector.getAgents(args)
+      }),
+      sentinelone_get_threats: this.createTool({
+        description: "Get detected threats from SentinelOne.",
+        parameters: {
+          type: "object",
+          properties: {
+            severity: { type: "string" },
+            status: { type: "string" }
+          }
+        },
+        execute: async (args) => s1Connector.getThreats(args)
+      }),
+      sentinelone_quarantine_threat: this.createTool({
+        description: "Quarantine a threat in SentinelOne.",
+        parameters: {
+          type: "object",
+          properties: {
+            threatId: { type: "string" }
+          },
+          required: ["threatId"]
+        },
+        execute: async (args) => s1Connector.quarantineThreat(args.threatId)
+      }),
+      sentinelone_health_check: this.createTool({
+        description: "Check SentinelOne connector health.",
+        parameters: { type: "object", properties: {} },
+        execute: async () => s1Connector.healthCheck()
+      })
+    };
+  }
+  /**
+   * Create Jira-specific tools for Vercel AI SDK
+   */
+  static createJiraTools(jiraConnector) {
+    return {
+      jira_get_issues: this.createTool({
+        description: "Get issues from Jira.",
+        parameters: {
+          type: "object",
+          properties: {
+            projectKey: { type: "string" },
+            status: { type: "string" }
+          }
+        },
+        execute: async (args) => jiraConnector.getIssues(args)
+      }),
+      jira_create_issue: this.createTool({
+        description: "Create a new Jira issue.",
+        parameters: {
+          type: "object",
+          properties: {
+            projectKey: { type: "string" },
+            summary: { type: "string" },
+            issueType: { type: "string" }
+          },
+          required: ["projectKey", "summary", "issueType"]
+        },
+        execute: async (args) => jiraConnector.createIssue(args)
+      }),
+      jira_update_issue: this.createTool({
+        description: "Update an existing Jira issue.",
+        parameters: {
+          type: "object",
+          properties: {
+            issueKey: { type: "string" },
+            summary: { type: "string" }
+          },
+          required: ["issueKey"]
+        },
+        execute: async (args) => {
+          const { issueKey, ...rest } = args;
+          return jiraConnector.updateIssue(issueKey, rest);
+        }
+      }),
+      jira_add_comment: this.createTool({
+        description: "Add a comment to a Jira issue.",
+        parameters: {
+          type: "object",
+          properties: {
+            issueKey: { type: "string" },
+            comment: { type: "string" }
+          },
+          required: ["issueKey", "comment"]
+        },
+        execute: async (args) => jiraConnector.addComment(args.issueKey, args.comment)
+      }),
+      jira_health_check: this.createTool({
+        description: "Check Jira connector health.",
+        parameters: { type: "object", properties: {} },
+        execute: async () => jiraConnector.healthCheck()
+      })
+    };
+  }
+  /**
+   * Create a full set of tools from multiple connectors
+   */
+  static createFullToolSet(connectors) {
+    let toolSet = {};
+    if (connectors.qualys) {
+      toolSet = { ...toolSet, ...this.createQualysTools(connectors.qualys) };
+    }
+    if (connectors.sentinelone) {
+      toolSet = { ...toolSet, ...this.createSentinelOneTools(connectors.sentinelone) };
+    }
+    if (connectors.jira) {
+      toolSet = { ...toolSet, ...this.createJiraTools(connectors.jira) };
+    }
+    return toolSet;
   }
 };
 
@@ -5012,12 +5227,12 @@ var AgentWorkflow = class {
 };
 var agentWorkflow = new AgentWorkflow({
   requireApproval: true,
-  agentName: "SkillmineSecurityAgent"
+  agentName: "ComplymentSecurityAgent"
 });
 
 // src/index.ts
 var SDK_VERSION = "0.1.0";
-var SDK_NAME = "@skillmine/connectors-sdk";
+var SDK_NAME = "@skill-mine/complyment-connectors-sdk";
 export {
   APIError,
   AgentOrchestrator,

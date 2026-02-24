@@ -1,5 +1,5 @@
 // ============================================
-// CIRCUIT BREAKER - Skillmine Connectors SDK
+// CIRCUIT BREAKER - Complyment Connectors SDK
 // ============================================
 
 export type CircuitState = 'closed' | 'open' | 'half-open'

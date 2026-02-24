@@ -1,5 +1,5 @@
 // ============================================
-// RATE LIMITER - Skillmine Connectors SDK
+// RATE LIMITER - Complyment Connectors SDK
 // ============================================
 
 export interface RateLimitOptions {

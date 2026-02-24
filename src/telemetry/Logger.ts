@@ -1,5 +1,5 @@
 // ============================================
-// LOGGER - Skillmine Connectors SDK
+// LOGGER - Complyment Connectors SDK
 // ============================================
 
 export enum LogLevel {

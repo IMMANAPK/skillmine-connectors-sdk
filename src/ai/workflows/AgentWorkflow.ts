@@ -1,5 +1,5 @@
 // ============================================
-// AGENT WORKFLOW - Skillmine Connectors SDK
+// AGENT WORKFLOW - Complyment Connectors SDK
 // ============================================
 // Pre-built security workflows for AI agents
 // Ready-to-use automation patterns
@@ -406,5 +406,5 @@ export class AgentWorkflow {
 
 export const agentWorkflow = new AgentWorkflow({
     requireApproval: true,
-    agentName: 'SkillmineSecurityAgent',
+    agentName: 'ComplymentSecurityAgent',
 })

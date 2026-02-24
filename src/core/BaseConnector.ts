@@ -1,5 +1,5 @@
 // ============================================
-// BASE CONNECTOR - Heart of Skillmine SDK
+// BASE CONNECTOR - Heart of Complyment SDK
 // ============================================
 
 import axios, { AxiosInstance, AxiosRequestConfig } from 'axios'

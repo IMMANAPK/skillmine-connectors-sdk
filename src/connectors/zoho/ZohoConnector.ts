@@ -1,5 +1,5 @@
 // ============================================
-// ZOHO CONNECTOR - Skillmine Connectors SDK
+// ZOHO CONNECTOR - Complyment Connectors SDK
 // ============================================
 
 import { BaseConnector } from '../../core/BaseConnector'

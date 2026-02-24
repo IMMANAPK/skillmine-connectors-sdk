@@ -1,5 +1,5 @@
 // ============================================
-// VAULT HANDLER - Skillmine Connectors SDK
+// VAULT HANDLER - Complyment Connectors SDK
 // ============================================
 // HashiCorp Vault integration for secrets
 // ============================================

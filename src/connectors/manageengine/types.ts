@@ -1,5 +1,5 @@
 // ============================================
-// MANAGEENGINE TYPES - Skillmine Connectors SDK
+// MANAGEENGINE TYPES - Complyment Connectors SDK
 // ============================================
 
 // ============================================

@@ -1895,6 +1895,7 @@ declare class LangChainAdapter {
         getIssues: (filter?: unknown) => Promise<unknown>;
         createIssue: (request: unknown) => Promise<unknown>;
         createSecurityTicket: (projectKey: string, title: string, description: string, severity: string, source: string) => Promise<unknown>;
+        updateIssue: (issueKey: string, request: unknown) => Promise<unknown>;
         addComment: (issueKey: string, body: string) => Promise<unknown>;
         transitionIssue: (issueKey: string, transitionId: string) => Promise<unknown>;
         healthCheck: () => Promise<unknown>;
@@ -1928,6 +1929,47 @@ declare class VercelAIAdapter {
      * Create a set of tools for a connector
      */
     static createToolkit(tools: VercelAIToolSet): VercelAIToolSet;
+    /**
+     * Create Qualys-specific tools for Vercel AI SDK
+     */
+    static createQualysTools(qualysConnector: {
+        getAssets: (filter?: unknown) => Promise<unknown>;
+        getVulnerabilities: (filter?: unknown) => Promise<unknown>;
+        getCriticalVulnerabilities: () => Promise<unknown>;
+        getNormalizedVulnerabilities: (filter?: unknown) => Promise<unknown>;
+        getScans: (filter?: unknown) => Promise<unknown>;
+        healthCheck: () => Promise<unknown>;
+    }): VercelAIToolSet;
+    /**
+     * Create SentinelOne-specific tools for Vercel AI SDK
+     */
+    static createSentinelOneTools(s1Connector: {
+        getAgents: (filter?: unknown) => Promise<unknown>;
+        getThreats: (filter?: unknown) => Promise<unknown>;
+        getCriticalThreats: () => Promise<unknown>;
+        quarantineThreat: (id: string) => Promise<unknown>;
+        healthCheck: () => Promise<unknown>;
+    }): VercelAIToolSet;
+    /**
+     * Create Jira-specific tools for Vercel AI SDK
+     */
+    static createJiraTools(jiraConnector: {
+        getIssues: (filter?: unknown) => Promise<unknown>;
+        createIssue: (request: unknown) => Promise<unknown>;
+        createSecurityTicket: (projectKey: string, title: string, description: string, severity: string, source: string) => Promise<unknown>;
+        updateIssue: (issueKey: string, request: unknown) => Promise<unknown>;
+        addComment: (issueKey: string, body: string) => Promise<unknown>;
+        transitionIssue: (issueKey: string, transitionId: string) => Promise<unknown>;
+        healthCheck: () => Promise<unknown>;
+    }): VercelAIToolSet;
+    /**
+     * Create a full set of tools from multiple connectors
+     */
+    static createFullToolSet(connectors: {
+        qualys?: Parameters<typeof VercelAIAdapter.createQualysTools>[0];
+        sentinelone?: Parameters<typeof VercelAIAdapter.createSentinelOneTools>[0];
+        jira?: Parameters<typeof VercelAIAdapter.createJiraTools>[0];
+    }): VercelAIToolSet;
 }
 
 interface OpenAIAgentTool {
@@ -2310,6 +2352,6 @@ declare class AgentWorkflow {
 declare const agentWorkflow: AgentWorkflow;
 
 declare const SDK_VERSION = "0.1.0";
-declare const SDK_NAME = "@skillmine/connectors-sdk";
+declare const SDK_NAME = "@skill-mine/complyment-connectors-sdk";
 
 export { APIError, AgentOrchestrator, AgentWorkflow, type ApiKeyAuthConfig, type AuditAction, type AuditEntry, AuditLogger, type AuditStatus, type AuthConfig, type AuthResult, AuthType, AuthenticationError, BaseConnector, type BasicAuthConfig, type BearerAuthConfig, CacheLayer, type CacheOptions, type CheckpointConfig, CheckpointConnector, type CheckpointGateway, type CheckpointGatewayStatus, type CheckpointGroup, type CheckpointHost, type CheckpointHostFilter, type CheckpointLog, type CheckpointLogFilter, type CheckpointNetwork, type CheckpointPolicy, type CheckpointRule, type CheckpointRuleAction, type CheckpointRuleFilter, type CheckpointSession, type CheckpointThreat, type CheckpointThreatSeverity, CircuitBreaker, CircuitBreakerOpenError, type CircuitBreakerOptions, type CircuitBreakerStats, type CircuitState, type ComputerStatus, ConfigurationError, ConnectionError, type ConnectorConfig, ConnectorEvent, ConnectorRegistry, type ConnectorResponse, ConnectorStatus, type DeploymentStatus, DuplicatePluginError, EnvHandler, HITLManager, type HITLRequest, type HITLRiskLevel, type HITLStatus, type HealthCheckResult, InvalidCredentialsError, type JiraComment, type JiraConfig, JiraConnector, type JiraCreateIssueRequest, type JiraIssue, type JiraIssueFilter, type JiraIssueListResponse, type JiraIssuePriority, type JiraIssueStatus, type JiraIssueType, type JiraProject, type JiraSprint, type JiraSprintState, type JiraTransition, type JiraUpdateIssueRequest, type JiraUser, LangChainAdapter, type LangChainTool, type LogEntry, LogLevel, Logger, type LoggerOptions, MCPServer, type MCPTool, type MCPToolResult, type ManageEngineComputer, type ManageEngineComputerFilter, type ManageEngineComputerListResponse, type ManageEngineConfig, ManageEngineConnector, type ManageEngineDeployment, type ManageEngineDeploymentFilter, type ManageEnginePatch, type ManageEnginePatchFilter, type ManageEnginePatchListResponse, type ManageEngineVulnerability, type MitigationAction, type MitigationRequest, type MitigationResponse, NormalizationEngine, type NormalizationResult, type NormalizedAsset, type NormalizedThreat, type NormalizedVulnerability, NotFoundError, type OAuth2Config, type OAuth2TokenRequest, type OpenAIAgentDefinition, type OpenAIAgentTool, OpenAIAgentsAdapter, type PaginatedResponse, type PaginationOptions, type PatchSeverity, type PatchStatus, PluginNotFoundError, type QualysAsset, type QualysAssetFilter, type QualysAssetListResponse, type QualysComplianceControl, type QualysConfig, QualysConnector, type QualysReport, type QualysScan, type QualysScanFilter, type QualysScanListResponse, type QualysScanStatus, type QualysSeverity, type QualysVulnFilter, type QualysVulnListResponse, type QualysVulnerability, RateLimitError, type RateLimitOptions, RateLimiter, RetryHandler, type RetryOptions, SDKError, SDK_NAME, SDK_VERSION, type SemanticDocument, SemanticSearch, type SemanticSearchResult, type SentinelOneActivity, type SentinelOneAgent, type SentinelOneAgentFilter, type SentinelOneAgentListResponse, type SentinelOneAgentStatus, type SentinelOneConfidenceLevel, type SentinelOneConfig, SentinelOneConnector, type SentinelOneGroup, type SentinelOneSite, type SentinelOneThreat, type SentinelOneThreatFilter, type SentinelOneThreatListResponse, type SentinelOneThreatStatus, SlidingWindowRateLimiter, type Span, type SpanOptions, StreamManager, type TelemetryOptions, TimeoutError, TokenExpiredError, type TokenResponse, Tracer, ValidationError, type VaultAuthConfig, VaultHandler, VercelAIAdapter, type VercelAITool, type VercelAIToolSet, WebhookManager, type WorkflowDefinition, type WorkflowExecution, type WorkflowResult, type ZohoAccount, type ZohoConfig, ZohoConnector, type ZohoContact, type ZohoContactFilter, type ZohoContactListResponse, type ZohoDeal, type ZohoDealFilter, type ZohoDealStage, type ZohoLead, type ZohoLeadFilter, type ZohoLeadStatus, type ZohoSearchResponse, type ZohoTask, type ZohoTaskStatus, agentWorkflow, auditLogger, createQualysMCPTools, createSentinelOneMCPTools, cvssToSeverity, detectAssetType, envHandler, hitlManager, isPrivateIP, logger, mcpServer, normalizationEngine, orchestrator, registry, semanticSearch, tracer, validateAssets, validateVulnerabilities, withRetry };

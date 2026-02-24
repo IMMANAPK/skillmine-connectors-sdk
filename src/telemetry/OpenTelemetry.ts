@@ -1,5 +1,5 @@
 // ============================================
-// OPENTELEMETRY - Skillmine Connectors SDK
+// OPENTELEMETRY - Complyment Connectors SDK
 // ============================================
 
 export interface SpanOptions {
@@ -49,7 +49,7 @@ export class Tracer {
   private readonly onSpanEnd?: (span: Span) => void
 
   constructor(options?: TelemetryOptions) {
-    this.serviceName = options?.serviceName ?? 'skillmine-connectors-sdk'
+    this.serviceName = options?.serviceName ?? 'complyment-connectors-sdk'
     this.serviceVersion = options?.serviceVersion ?? '1.0.0'
     this.enabled = options?.enabled ?? true
     this.onSpanEnd = options?.onSpanEnd
@@ -194,6 +194,6 @@ export class Tracer {
 // ============================================
 
 export const tracer = new Tracer({
-  serviceName: 'skillmine-connectors-sdk',
+  serviceName: 'complyment-connectors-sdk',
   enabled: true,
 })

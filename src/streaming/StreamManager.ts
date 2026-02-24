@@ -1,5 +1,5 @@
 // ============================================
-// STREAM MANAGER - Skillmine Connectors SDK
+// STREAM MANAGER - Complyment Connectors SDK
 // ============================================
 
 import { EventEmitter } from 'events'

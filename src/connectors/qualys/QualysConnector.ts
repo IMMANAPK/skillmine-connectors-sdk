@@ -1,5 +1,5 @@
 // ============================================
-// QUALYS CONNECTOR - Skillmine Connectors SDK
+// QUALYS CONNECTOR - Complyment Connectors SDK
 // ============================================
 
 import { BaseConnector } from '../../core/BaseConnector'

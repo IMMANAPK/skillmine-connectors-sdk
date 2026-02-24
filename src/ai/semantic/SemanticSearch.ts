@@ -1,5 +1,5 @@
 // ============================================
-// SEMANTIC SEARCH - Skillmine Connectors SDK
+// SEMANTIC SEARCH - Complyment Connectors SDK
 // ============================================
 // RAG-based semantic search on connector data
 // Natural language queries on security data

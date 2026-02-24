@@ -1,5 +1,5 @@
 // ============================================
-// RETRY HANDLER - Skillmine Connectors SDK
+// RETRY HANDLER - Complyment Connectors SDK
 // ============================================
 
 export interface RetryOptions {

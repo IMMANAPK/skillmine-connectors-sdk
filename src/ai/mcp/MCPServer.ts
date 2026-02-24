@@ -1,5 +1,5 @@
 // ============================================
-// MCP SERVER - Skillmine Connectors SDK
+// MCP SERVER - Complyment Connectors SDK
 // ============================================
 // Model Context Protocol - AI Agents can use
 // connectors directly via MCP standard
@@ -49,9 +49,9 @@ export class MCPServer {
   private readonly description: string
 
   constructor(options?: MCPServerOptions) {
-    this.name = options?.name ?? 'skillmine-connectors-mcp'
+    this.name = options?.name ?? 'complyment-connectors-mcp'
     this.version = options?.version ?? '1.0.0'
-    this.description = options?.description ?? 'Skillmine Connectors SDK MCP Server'
+    this.description = options?.description ?? 'Complyment Connectors SDK MCP Server'
   }
 
   // ============================================
@@ -282,7 +282,7 @@ export function createSentinelOneMCPTools(s1Connector: {
 // ============================================
 
 export const mcpServer = new MCPServer({
-  name: 'skillmine-connectors-mcp',
+  name: 'complyment-connectors-mcp',
   version: '1.0.0',
-  description: 'AI Agent interface for Skillmine security connectors',
+  description: 'AI Agent interface for Complyment security connectors',
 })

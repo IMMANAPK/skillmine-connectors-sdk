@@ -1,5 +1,5 @@
 // ============================================
-// AGENT ORCHESTRATOR - Skillmine Connectors SDK
+// AGENT ORCHESTRATOR - Complyment Connectors SDK
 // ============================================
 // Multi-agent orchestration - coordinate
 // multiple AI agents working together

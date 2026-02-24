@@ -1,5 +1,5 @@
 // ============================================
-// SENTINELONE TYPES - Skillmine Connectors SDK
+// SENTINELONE TYPES - Complyment Connectors SDK
 // ============================================
 
 // ============================================

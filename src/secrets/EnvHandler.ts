@@ -1,5 +1,5 @@
 // ============================================
-// ENV HANDLER - Skillmine Connectors SDK
+// ENV HANDLER - Complyment Connectors SDK
 // ============================================
 // Environment variable based secret management
 // Fallback when Vault is not available
@@ -51,7 +51,7 @@ export interface ConnectorEnvMap {
 export class EnvHandler {
   private prefix: string
 
-  constructor(prefix = 'SKILLMINE') {
+  constructor(prefix = 'COMPLYMENT') {
     this.prefix = prefix
   }
 
@@ -180,39 +180,39 @@ export class EnvHandler {
   // ============================================
 
   static getEnvExample(): string {
-    return `# Skillmine Connectors SDK - Environment Variables
+    return `# Complyment Connectors SDK - Environment Variables
 
 # Qualys
-SKILLMINE_QUALYS_BASE_URL=https://qualysapi.qualys.com
-SKILLMINE_QUALYS_USERNAME=your_username
-SKILLMINE_QUALYS_PASSWORD=your_password
+COMPLYMENT_QUALYS_BASE_URL=https://qualysapi.qualys.com
+COMPLYMENT_QUALYS_USERNAME=your_username
+COMPLYMENT_QUALYS_PASSWORD=your_password
 
 # SentinelOne
-SKILLMINE_SENTINELONE_BASE_URL=https://your-instance.sentinelone.net
-SKILLMINE_SENTINELONE_API_TOKEN=your_api_token
+COMPLYMENT_SENTINELONE_BASE_URL=https://your-instance.sentinelone.net
+COMPLYMENT_SENTINELONE_API_TOKEN=your_api_token
 
 # Checkpoint
-SKILLMINE_CHECKPOINT_BASE_URL=https://your-checkpoint-mgmt
-SKILLMINE_CHECKPOINT_USERNAME=admin
-SKILLMINE_CHECKPOINT_PASSWORD=your_password
-SKILLMINE_CHECKPOINT_DOMAIN=your_domain
+COMPLYMENT_CHECKPOINT_BASE_URL=https://your-checkpoint-mgmt
+COMPLYMENT_CHECKPOINT_USERNAME=admin
+COMPLYMENT_CHECKPOINT_PASSWORD=your_password
+COMPLYMENT_CHECKPOINT_DOMAIN=your_domain
 
 # ManageEngine
-SKILLMINE_MANAGEENGINE_BASE_URL=https://your-manageengine
-SKILLMINE_MANAGEENGINE_CLIENT_ID=your_client_id
-SKILLMINE_MANAGEENGINE_CLIENT_SECRET=your_client_secret
-SKILLMINE_MANAGEENGINE_REFRESH_TOKEN=your_refresh_token
+COMPLYMENT_MANAGEENGINE_BASE_URL=https://your-manageengine
+COMPLYMENT_MANAGEENGINE_CLIENT_ID=your_client_id
+COMPLYMENT_MANAGEENGINE_CLIENT_SECRET=your_client_secret
+COMPLYMENT_MANAGEENGINE_REFRESH_TOKEN=your_refresh_token
 
 # Jira
-SKILLMINE_JIRA_BASE_URL=https://your-org.atlassian.net
-SKILLMINE_JIRA_EMAIL=your@email.com
-SKILLMINE_JIRA_API_TOKEN=your_api_token
+COMPLYMENT_JIRA_BASE_URL=https://your-org.atlassian.net
+COMPLYMENT_JIRA_EMAIL=your@email.com
+COMPLYMENT_JIRA_API_TOKEN=your_api_token
 
 # Zoho
-SKILLMINE_ZOHO_BASE_URL=https://www.zohoapis.com
-SKILLMINE_ZOHO_CLIENT_ID=your_client_id
-SKILLMINE_ZOHO_CLIENT_SECRET=your_client_secret
-SKILLMINE_ZOHO_REFRESH_TOKEN=your_refresh_token
+COMPLYMENT_ZOHO_BASE_URL=https://www.zohoapis.com
+COMPLYMENT_ZOHO_CLIENT_ID=your_client_id
+COMPLYMENT_ZOHO_CLIENT_SECRET=your_client_secret
+COMPLYMENT_ZOHO_REFRESH_TOKEN=your_refresh_token
 `
   }
 }
@@ -221,4 +221,4 @@ SKILLMINE_ZOHO_REFRESH_TOKEN=your_refresh_token
 // Global Env Handler
 // ============================================
 
-export const envHandler = new EnvHandler('SKILLMINE')
+export const envHandler = new EnvHandler('COMPLYMENT')

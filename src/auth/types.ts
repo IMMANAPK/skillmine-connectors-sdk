@@ -1,5 +1,5 @@
 // ============================================
-// AUTH TYPES - Skillmine Connectors SDK
+// AUTH TYPES - Complyment Connectors SDK
 // ============================================
 
 export interface TokenResponse {

@@ -1,5 +1,5 @@
 // ============================================
-// JIRA CONNECTOR - Skillmine Connectors SDK
+// JIRA CONNECTOR - Complyment Connectors SDK
 // ============================================
 
 import { BaseConnector } from '../../core/BaseConnector'

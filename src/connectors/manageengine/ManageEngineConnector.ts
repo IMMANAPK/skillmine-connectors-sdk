@@ -1,5 +1,5 @@
 // ============================================
-// MANAGEENGINE CONNECTOR - Skillmine Connectors SDK
+// MANAGEENGINE CONNECTOR - Complyment Connectors SDK
 // ============================================
 
 import { BaseConnector } from '../../core/BaseConnector'

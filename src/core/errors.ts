@@ -1,5 +1,5 @@
 // ============================================
-// CUSTOM ERRORS - Skillmine Connectors SDK
+// CUSTOM ERRORS - Complyment Connectors SDK
 // ============================================
 
 export class SDKError extends Error {

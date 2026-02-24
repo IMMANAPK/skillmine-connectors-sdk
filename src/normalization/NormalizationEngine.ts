@@ -1,5 +1,5 @@
 // ============================================
-// NORMALIZATION ENGINE - Skillmine Connectors SDK
+// NORMALIZATION ENGINE - Complyment Connectors SDK
 // ============================================
 
 import {

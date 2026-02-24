@@ -1,5 +1,5 @@
 // ============================================
-// OPENAI AGENTS ADAPTER - Skillmine Connectors SDK
+// OPENAI AGENTS ADAPTER - Complyment Connectors SDK
 // ============================================
 // Convert connectors to OpenAI Agents SDK tools
 // Compatible with OpenAI Agents SDK 2025/2026

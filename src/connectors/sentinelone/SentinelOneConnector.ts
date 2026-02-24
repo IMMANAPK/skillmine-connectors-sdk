@@ -1,5 +1,5 @@
 // ============================================
-// SENTINELONE CONNECTOR - Skillmine Connectors SDK
+// SENTINELONE CONNECTOR - Complyment Connectors SDK
 // ============================================
 
 import { BaseConnector } from '../../core/BaseConnector'

@@ -1,5 +1,5 @@
 // ============================================
-// LANGCHAIN ADAPTER - Skillmine Connectors SDK
+// LANGCHAIN ADAPTER - Complyment Connectors SDK
 // ============================================
 // Convert connectors to LangChain Tools
 // so AI agents can use them directly

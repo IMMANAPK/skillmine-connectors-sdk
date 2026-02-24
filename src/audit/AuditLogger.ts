@@ -1,5 +1,5 @@
 // ============================================
-// AUDIT LOGGER - Skillmine Connectors SDK
+// AUDIT LOGGER - Complyment Connectors SDK
 // ============================================
 
 export type AuditAction =

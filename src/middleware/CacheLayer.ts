@@ -1,5 +1,5 @@
 // ============================================
-// CACHE LAYER - Skillmine Connectors SDK
+// CACHE LAYER - Complyment Connectors SDK
 // ============================================
 
 export interface CacheOptions {

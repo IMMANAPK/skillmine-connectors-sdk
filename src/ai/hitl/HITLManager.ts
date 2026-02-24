@@ -1,5 +1,5 @@
 // ============================================
-// HUMAN-IN-THE-LOOP MANAGER - Skillmine Connectors SDK
+// HUMAN-IN-THE-LOOP MANAGER - Complyment Connectors SDK
 // ============================================
 // Critical actions require human approval
 // before AI agents can execute them

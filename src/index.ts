@@ -1,7 +1,7 @@
 // ============================================
-// SKILLMINE CONNECTORS SDK - Main Export
+// COMPLYMENT CONNECTORS SDK - Main Export
 // ============================================
-// @skillmine/connectors-sdk
+// @skill-mine/complyment-connectors-sdk
 // Enterprise Security Tool Connectors SDK
 // ============================================
 
@@ -170,4 +170,4 @@ export type { WorkflowResult } from './ai/workflows/AgentWorkflow'
 // ============================================
 
 export const SDK_VERSION = '0.1.0'
-export const SDK_NAME = '@skillmine/connectors-sdk'
+export const SDK_NAME = '@skill-mine/complyment-connectors-sdk'

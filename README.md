@@ -1,10 +1,10 @@
-# @skillmine/connectors-sdk
+# @skill-mine/complyment-connectors-sdk
 
-> Enterprise Security Tool Connectors SDK — built at Skillmine Technology
+> Enterprise Security Tool Connectors SDK — built at Skill-Mine Technology
 
 A TypeScript SDK that abstracts 6+ enterprise security tool integrations with built-in AI agent compatibility, circuit breakers, rate limiting, and human-in-the-loop controls.
 
-[![npm version](https://img.shields.io/badge/npm-0.1.0-blue)](https://www.npmjs.com/package/@skillmine/connectors-sdk)
+[![npm version](https://img.shields.io/badge/npm-0.1.0-blue)](https://www.npmjs.com/package/@skill-mine/complyment-connectors-sdk)
 [![TypeScript](https://img.shields.io/badge/TypeScript-5.x-blue)](https://www.typescriptlang.org/)
 [![Build](https://img.shields.io/badge/build-passing-brightgreen)](#)
 [![License](https://img.shields.io/badge/license-MIT-green)](#)
@@ -26,7 +26,7 @@ A TypeScript SDK that abstracts 6+ enterprise security tool integrations with bu
 
 ## Installation
 ```bash
-npm install @skillmine/connectors-sdk
+npm install @skill-mine/complyment-connectors-sdk
 ```
 
 ---
@@ -38,7 +38,7 @@ import {
   SentinelOneConnector,
   JiraConnector,
   registry,
-} from '@skillmine/connectors-sdk'
+} from '@skill-mine/complyment-connectors-sdk'
 
 // Initialize connectors
 const qualys = new QualysConnector({
@@ -128,7 +128,7 @@ await zoho.getDeals({ stage: 'Qualification' })
 
 ### MCP (Model Context Protocol)
 ```typescript
-import { MCPServer, createQualysMCPTools } from '@skillmine/connectors-sdk'
+import { MCPServer, createQualysMCPTools } from '@skill-mine/complyment-connectors-sdk'
 
 const mcp = new MCPServer({ name: 'security-mcp' })
 
@@ -141,7 +141,7 @@ const result = await mcp.executeTool('qualys_get_critical_vulnerabilities', {})
 
 ### LangChain
 ```typescript
-import { LangChainAdapter } from '@skillmine/connectors-sdk'
+import { LangChainAdapter } from '@skill-mine/complyment-connectors-sdk'
 
 const tools = LangChainAdapter.createAllTools({ qualys, sentinelone, jira })
 
@@ -151,7 +151,7 @@ const agent = createReactAgent({ llm, tools })
 
 ### Vercel AI SDK
 ```typescript
-import { VercelAIAdapter } from '@skillmine/connectors-sdk'
+import { VercelAIAdapter } from '@skill-mine/complyment-connectors-sdk'
 
 const tools = VercelAIAdapter.createFullToolSet({ qualys, sentinelone, jira })
 
@@ -164,7 +164,7 @@ const result = await generateText({
 
 ### OpenAI Agents SDK
 ```typescript
-import { OpenAIAgentsAdapter } from '@skillmine/connectors-sdk'
+import { OpenAIAgentsAdapter } from '@skill-mine/complyment-connectors-sdk'
 
 const agent = OpenAIAgentsAdapter.createSecurityAnalystAgent({
   qualys, sentinelone, jira,
@@ -177,7 +177,7 @@ const agent = OpenAIAgentsAdapter.createSecurityAnalystAgent({
 
 ## Human-in-the-Loop (HITL)
 ```typescript
-import { HITLManager } from '@skillmine/connectors-sdk'
+import { HITLManager } from '@skill-mine/complyment-connectors-sdk'
 
 const hitl = new HITLManager({
   autoApproveRiskLevels: ['low'],
@@ -202,7 +202,7 @@ const request = await hitl.requestApproval({
 })
 
 // Human approves via dashboard
-await hitl.approve(request.id, 'john.doe@skillmine.com')
+await hitl.approve(request.id, 'john.doe@skill-mine.com')
 ```
 
 ---
@@ -261,7 +261,7 @@ const qualys = new QualysConnector({
 
 ## Normalization
 ```typescript
-import { normalizationEngine } from '@skillmine/connectors-sdk'
+import { normalizationEngine } from '@skill-mine/complyment-connectors-sdk'
 
 // Normalize across multiple connectors
 const result = normalizationEngine.normalizeVulnerabilities([
@@ -282,7 +282,7 @@ const stats = normalizationEngine.getSeverityStats(result.data)
 
 ## Semantic Search
 ```typescript
-import { semanticSearch } from '@skillmine/connectors-sdk'
+import { semanticSearch } from '@skill-mine/complyment-connectors-sdk'
 
 // Index connector data
 semanticSearch.indexVulnerabilities(qualysVulns)
@@ -299,7 +299,7 @@ const vulns = await semanticSearch.findVulnerableAssets('web-server-01')
 
 ## Audit Logging
 ```typescript
-import { auditLogger } from '@skillmine/connectors-sdk'
+import { auditLogger } from '@skill-mine/complyment-connectors-sdk'
 
 auditLogger.logSuccess('data.fetch', 'qualys', { count: 42 }, 320)
 auditLogger.logFailure('auth.login', 'sentinelone', 'Invalid token')
@@ -317,24 +317,24 @@ const json = auditLogger.exportAsJson()
 ## Environment Variables
 ```bash
 # Qualys
-SKILLMINE_QUALYS_BASE_URL=https://qualysapi.qualys.com
-SKILLMINE_QUALYS_USERNAME=your_username
-SKILLMINE_QUALYS_PASSWORD=your_password
+COMPLYMENT_QUALYS_BASE_URL=https://qualysapi.qualys.com
+COMPLYMENT_QUALYS_USERNAME=your_username
+COMPLYMENT_QUALYS_PASSWORD=your_password
 
 # SentinelOne
-SKILLMINE_SENTINELONE_BASE_URL=https://your-instance.sentinelone.net
-SKILLMINE_SENTINELONE_API_TOKEN=your_api_token
+COMPLYMENT_SENTINELONE_BASE_URL=https://your-instance.sentinelone.net
+COMPLYMENT_SENTINELONE_API_TOKEN=your_api_token
 
 # Jira
-SKILLMINE_JIRA_BASE_URL=https://your-org.atlassian.net
-SKILLMINE_JIRA_EMAIL=your@email.com
-SKILLMINE_JIRA_API_TOKEN=your_api_token
+COMPLYMENT_JIRA_BASE_URL=https://your-org.atlassian.net
+COMPLYMENT_JIRA_EMAIL=your@email.com
+COMPLYMENT_JIRA_API_TOKEN=your_api_token
 
 # ManageEngine
-SKILLMINE_MANAGEENGINE_BASE_URL=https://your-manageengine
-SKILLMINE_MANAGEENGINE_CLIENT_ID=your_client_id
-SKILLMINE_MANAGEENGINE_CLIENT_SECRET=your_client_secret
-SKILLMINE_MANAGEENGINE_REFRESH_TOKEN=your_refresh_token
+COMPLYMENT_MANAGEENGINE_BASE_URL=https://your-manageengine
+COMPLYMENT_MANAGEENGINE_CLIENT_ID=your_client_id
+COMPLYMENT_MANAGEENGINE_CLIENT_SECRET=your_client_secret
+COMPLYMENT_MANAGEENGINE_REFRESH_TOKEN=your_refresh_token
 ```
 
 ---
@@ -352,7 +352,7 @@ dist/
 
 ## Architecture
 ```
-@skillmine/connectors-sdk
+@skill-mine/complyment-connectors-sdk
 ├── Connectors        (Qualys, SentinelOne, Checkpoint, ManageEngine, Jira, Zoho)
 ├── Core              (BaseConnector, Registry, Types, Errors)
 ├── Middleware        (CircuitBreaker, RateLimiter, RetryHandler, CacheLayer)
@@ -386,8 +386,8 @@ dist/
 
 ## Author
 
-**Immanuvel** — Backend Developer, Skillmine Technology Consulting  
-Built as internal tooling for the COMPLYment compliance platform serving 50+ enterprise clients.
+**Immanuvel** — Backend Developer, Skill-Mine Technology Consulting
+Built as internal tooling for the Complyment compliance platform serving 50+ enterprise clients.
 
 ---
 

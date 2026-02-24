@@ -1,5 +1,5 @@
 // ============================================
-// CHECKPOINT CONNECTOR - Skillmine Connectors SDK
+// CHECKPOINT CONNECTOR - Complyment Connectors SDK
 // ============================================
 
 import { BaseConnector } from '../../core/BaseConnector'

@@ -1,5 +1,5 @@
 // ============================================
-// CHECKPOINT TYPES - Skillmine Connectors SDK
+// CHECKPOINT TYPES - Complyment Connectors SDK
 // ============================================
 
 // ============================================

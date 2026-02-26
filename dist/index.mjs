@@ -575,6 +575,631 @@ var ConnectorRegistry = class {
 };
 var registry = new ConnectorRegistry();
 
+// src/connectors/qualys/types.ts
+var QualysScanStatus = /* @__PURE__ */ ((QualysScanStatus2) => {
+  QualysScanStatus2["RUNNING"] = "Running";
+  QualysScanStatus2["PAUSED"] = "Paused";
+  QualysScanStatus2["FINISHED"] = "Finished";
+  QualysScanStatus2["ERROR"] = "Error";
+  QualysScanStatus2["CANCELED"] = "Canceled";
+  QualysScanStatus2["QUEUED"] = "Queued";
+  QualysScanStatus2["LOADING"] = "Loading";
+  QualysScanStatus2["SUBMITTED"] = "Submitted";
+  return QualysScanStatus2;
+})(QualysScanStatus || {});
+var QualysScanType = /* @__PURE__ */ ((QualysScanType2) => {
+  QualysScanType2["VM"] = "VM";
+  QualysScanType2["WAS"] = "WAS";
+  QualysScanType2["PC"] = "PC";
+  return QualysScanType2;
+})(QualysScanType || {});
+function validateQualysScanStatus(status) {
+  if (!status) return null;
+  const statusUpper = status.toUpperCase();
+  const statusMap = {
+    RUNNING: "Running" /* RUNNING */,
+    PAUSED: "Paused" /* PAUSED */,
+    FINISHED: "Finished" /* FINISHED */,
+    ERROR: "Error" /* ERROR */,
+    CANCELED: "Canceled" /* CANCELED */,
+    CANCELLED: "Canceled" /* CANCELED */,
+    QUEUED: "Queued" /* QUEUED */,
+    LOADING: "Loading" /* LOADING */,
+    SUBMITTED: "Submitted" /* SUBMITTED */
+  };
+  return statusMap[statusUpper] || null;
+}
+function isValidQualysScanStatus(status) {
+  return validateQualysScanStatus(status) !== null;
+}
+function isQualysScanTerminal(status) {
+  return [
+    "Finished" /* FINISHED */,
+    "Error" /* ERROR */,
+    "Canceled" /* CANCELED */
+  ].includes(status);
+}
+function isQualysScanActive(status) {
+  return [
+    "Running" /* RUNNING */,
+    "Queued" /* QUEUED */,
+    "Loading" /* LOADING */,
+    "Submitted" /* SUBMITTED */
+  ].includes(status);
+}
+
+// src/connectors/qualys/constants.ts
+var QUALYS_VM_API_PATHS = {
+  // Scan Operations
+  SCAN_LIST: "/api/3.0/fo/scan/",
+  SCAN_LAUNCH: "/api/3.0/fo/scan/",
+  SCAN_STATUS: "/api/3.0/fo/scan/",
+  SCAN_RESULTS: "/api/3.0/fo/scan/",
+  SCAN_PAUSE: "/api/3.0/fo/scan/",
+  SCAN_RESUME: "/api/3.0/fo/scan/",
+  SCAN_CANCEL: "/api/3.0/fo/scan/",
+  SCAN_DELETE: "/api/3.0/fo/scan/",
+  // Host Detection
+  HOST_DETECTIONS: "/api/4.0/fo/asset/host/vm/detection/",
+  // Reports
+  REPORT_LIST: "/api/3.0/fo/report/",
+  REPORT_LAUNCH: "/api/3.0/fo/report/",
+  REPORT_FETCH: "/api/3.0/fo/report/",
+  REPORT_DELETE: "/api/3.0/fo/report/",
+  // Knowledge Base
+  VULN_KB: "/api/3.0/fo/knowledge_base/vuln/",
+  // Asset Management
+  ASSET_HOST_LIST: "/api/3.0/fo/asset/host/",
+  ASSET_GROUP_LIST: "/api/3.0/fo/asset/group/",
+  // Option Profiles
+  OPTION_PROFILES: "/api/3.0/fo/subscription/option_profile/",
+  // QPS API (newer REST API)
+  QPS_HOST_ASSET: "/qps/rest/2.0/search/am/hostasset"
+};
+var QUALYS_WAS_API_PATHS = {
+  WAS_SCAN_LIST: "/qps/rest/3.0/search/was/wasscan",
+  WAS_SCAN_GET: "/qps/rest/3.0/get/was/wasscan/",
+  WAS_SCAN_LAUNCH: "/qps/rest/3.0/launch/was/wasscan/",
+  WAS_FINDINGS: "/qps/rest/3.0/search/was/finding",
+  WAS_WEBAPPS: "/qps/rest/3.0/search/was/webapp",
+  WAS_REPORT_CREATE: "/qps/rest/3.0/create/was/report"
+};
+var QUALYS_DEFAULTS = {
+  DEFAULT_SCAN_TYPE: "VM",
+  POLL_INTERVAL_MS: 3e4,
+  // 30 seconds
+  MAX_POLL_ATTEMPTS: 120,
+  // 1 hour maximum
+  REQUEST_TIMEOUT_MS: 3e5,
+  // 5 minutes
+  MAX_RETRIES: 3,
+  RETRY_DELAY_MS: 5e3,
+  // 5 seconds
+  TRUNCATION_LIMIT: 1e3,
+  // Max results per request
+  KB_FETCH_LIMIT: 100
+  // Max QIDs per KB request
+};
+var QUALYS_HEADERS = {
+  XML_CONTENT: {
+    "Content-Type": "text/xml",
+    "Accept": "application/json"
+  },
+  FORM_CONTENT: {
+    "Content-Type": "application/x-www-form-urlencoded"
+  },
+  DEFAULT: {
+    "X-Requested-With": "ComplymentConnectorsSDK"
+  }
+};
+
+// src/connectors/qualys/parser.ts
+function parseHostDetections(response, scanTitle) {
+  const vulnerabilities = [];
+  const hosts = [];
+  const severityCounts = {
+    critical: 0,
+    high: 0,
+    medium: 0,
+    low: 0,
+    info: 0
+  };
+  const serviceResponse = response?.ServiceResponse || response?.serviceResponse;
+  if (serviceResponse) {
+    const hostAssets = serviceResponse.data || [];
+    if (!Array.isArray(hostAssets) || hostAssets.length === 0) {
+      return emptyReport(scanTitle);
+    }
+    for (const hostData of hostAssets) {
+      const hostAsset = hostData.HostAsset || hostData;
+      const hostInfo = {
+        id: hostAsset.id,
+        ip: hostAsset.address,
+        dns: hostAsset.dnsHostName || hostAsset.name,
+        os: hostAsset.os,
+        trackingMethod: hostAsset.trackingMethod,
+        lastScanDatetime: hostAsset.vulnsUpdated || hostAsset.lastVulnScan ? new Date(hostAsset.vulnsUpdated || hostAsset.lastVulnScan) : void 0
+      };
+      hosts.push(hostInfo);
+      const vulnList = hostAsset.vuln?.list || [];
+      if (!Array.isArray(vulnList) || vulnList.length === 0) {
+        continue;
+      }
+      for (const vulnData of vulnList) {
+        const hostAssetVuln = vulnData.HostAssetVuln || vulnData;
+        const vulnerability = parseQPSVulnerability(hostAssetVuln, hostInfo);
+        vulnerabilities.push(vulnerability);
+        incrementSeverityCount(severityCounts, vulnerability.severity);
+      }
+    }
+  } else {
+    const hostList = response?.host_list_vm_detection_output?.response?.host_list?.host;
+    if (!hostList) {
+      return emptyReport(scanTitle);
+    }
+    const hostsArray = Array.isArray(hostList) ? hostList : [hostList];
+    for (const host of hostsArray) {
+      const hostInfo = {
+        id: host.id,
+        ip: host.ip,
+        dns: host.dns,
+        netbios: host.netbios,
+        os: host.os,
+        trackingMethod: host.tracking_method,
+        lastScanDatetime: host.last_scan_datetime ? new Date(host.last_scan_datetime) : void 0
+      };
+      hosts.push(hostInfo);
+      const detections = host.detection_list?.detection;
+      if (!detections) continue;
+      const detectionsArray = Array.isArray(detections) ? detections : [detections];
+      for (const detection of detectionsArray) {
+        const vulnerability = parseDetection(detection, hostInfo);
+        vulnerabilities.push(vulnerability);
+        incrementSeverityCount(severityCounts, vulnerability.severity);
+      }
+    }
+  }
+  return {
+    scanTitle,
+    hostsScanned: hosts.length,
+    totalVulnerabilities: vulnerabilities.length,
+    criticalCount: severityCounts.critical,
+    highCount: severityCounts.high,
+    mediumCount: severityCounts.medium,
+    lowCount: severityCounts.low,
+    infoCount: severityCounts.info,
+    vulnerabilities,
+    hosts
+  };
+}
+function parseWASFindings(response, scanTitle) {
+  const vulnerabilities = [];
+  const severityCounts = {
+    critical: 0,
+    high: 0,
+    medium: 0,
+    low: 0,
+    info: 0
+  };
+  const findingsList = response?.ServiceResponse?.data;
+  if (!findingsList || !Array.isArray(findingsList) || findingsList.length === 0) {
+    return emptyReport(scanTitle);
+  }
+  const webAppsSet = /* @__PURE__ */ new Set();
+  for (const findingWrapper of findingsList) {
+    const finding = findingWrapper?.Finding;
+    if (!finding) continue;
+    if (finding.webApp?.url) {
+      webAppsSet.add(finding.webApp.url);
+    }
+    const vulnerability = parseWASFinding(finding);
+    vulnerabilities.push(vulnerability);
+    incrementSeverityCount(severityCounts, vulnerability.severity);
+  }
+  return {
+    scanTitle,
+    hostsScanned: webAppsSet.size,
+    totalVulnerabilities: vulnerabilities.length,
+    criticalCount: severityCounts.critical,
+    highCount: severityCounts.high,
+    mediumCount: severityCounts.medium,
+    lowCount: severityCounts.low,
+    infoCount: severityCounts.info,
+    vulnerabilities,
+    hosts: Array.from(webAppsSet).map((url) => ({ url }))
+  };
+}
+function parseVulnerabilityKB(response) {
+  const kbMap = /* @__PURE__ */ new Map();
+  const vulnList = response?.knowledge_base_vuln_list_output?.response?.vuln_list?.vuln;
+  if (!vulnList) {
+    return kbMap;
+  }
+  const vulnsArray = Array.isArray(vulnList) ? vulnList : [vulnList];
+  for (const vuln of vulnsArray) {
+    const qid = parseInt(vuln.qid || "0");
+    if (qid === 0) continue;
+    const kbEntry = {
+      qid,
+      title: vuln.title || `QID-${qid}`,
+      vulnType: vuln.vuln_type,
+      severityLevel: parseInt(vuln.severity_level || "1"),
+      category: vuln.category,
+      publishedDatetime: vuln.published_datetime,
+      patchable: vuln.patchable === "true" || vuln.patchable === true,
+      diagnosis: vuln.diagnosis,
+      consequence: vuln.consequence,
+      solution: vuln.solution,
+      cvssBase: vuln.cvss?.base ? parseFloat(vuln.cvss.base) : void 0,
+      cvssTemporal: vuln.cvss?.temporal ? parseFloat(vuln.cvss.temporal) : void 0,
+      cvss3Base: vuln.cvss_v3?.base ? parseFloat(vuln.cvss_v3.base) : void 0,
+      cvss3Temporal: vuln.cvss_v3?.temporal ? parseFloat(vuln.cvss_v3.temporal) : void 0,
+      cveList: extractCVEList(vuln.cve_list),
+      vendorReferenceList: extractVendorReferences(vuln.vendor_reference_list),
+      bugtraqList: extractBugtraqList(vuln.bugtraq_list),
+      pciFlag: vuln.pci_flag === "true" || vuln.pci_flag === true,
+      pciReasons: extractPCIReasons(vuln.pci_reasons),
+      exploitability: vuln.correlation?.exploits ? "Available" : "Unknown",
+      associatedMalware: extractMalware(vuln.correlation?.malware)
+    };
+    kbMap.set(qid, kbEntry);
+  }
+  return kbMap;
+}
+function enrichVulnerabilitiesWithKB(vulnerabilities, kbMap) {
+  return vulnerabilities.map((vuln) => {
+    const kbEntry = kbMap.get(vuln.qid);
+    if (!kbEntry) return vuln;
+    return {
+      ...vuln,
+      title: kbEntry.title,
+      cvssBase: kbEntry.cvssBase,
+      cvssTemporal: kbEntry.cvssTemporal,
+      cvss3Base: kbEntry.cvss3Base,
+      cvss3Temporal: kbEntry.cvss3Temporal,
+      cveList: kbEntry.cveList,
+      vendorReferenceList: kbEntry.vendorReferenceList,
+      bugtraqList: kbEntry.bugtraqList,
+      threat: kbEntry.consequence,
+      impact: kbEntry.consequence,
+      solution: kbEntry.solution,
+      diagnosis: kbEntry.diagnosis,
+      consequence: kbEntry.consequence,
+      pciFlag: kbEntry.pciFlag,
+      pciReasons: kbEntry.pciReasons,
+      category: kbEntry.category,
+      exploitability: kbEntry.exploitability,
+      associatedMalware: kbEntry.associatedMalware,
+      patchable: kbEntry.patchable
+    };
+  });
+}
+function parseVMScanList(response) {
+  const scans = [];
+  const serviceResponse = response?.ServiceResponse || response?.serviceResponse;
+  if (serviceResponse) {
+    let hostAssets = serviceResponse.data || [];
+    if (serviceResponse.data?.HostAsset) {
+      hostAssets = Array.isArray(serviceResponse.data.HostAsset) ? serviceResponse.data.HostAsset : [serviceResponse.data.HostAsset];
+    }
+    if (!Array.isArray(hostAssets)) {
+      hostAssets = [hostAssets];
+    }
+    for (const host of hostAssets) {
+      let asset = host.HostAsset || host;
+      const assetId = asset.id || asset.ID || asset.assetId;
+      const assetName = asset.name || asset.Name || asset.hostname || asset.hostName;
+      const assetAddress = asset.address || asset.Address || asset.ip || asset.IP;
+      const assetDns = asset.dnsHostName || asset.dns || asset.DNS || asset.fqdn;
+      const osName = asset.operatingSystem || asset.os || asset.OS;
+      const lastScan = asset.lastVulnScan || asset.lastVulnerabilitysScan || asset.lastScan;
+      const scan = {
+        id: assetId || "",
+        scanRef: `asset/${assetId || "unknown"}`,
+        title: assetName || `Host: ${assetAddress || assetDns || "Unknown"}`,
+        type: "VM" /* VM */,
+        target: assetAddress || assetDns || "unknown",
+        launchDatetime: lastScan ? new Date(lastScan) : void 0,
+        status: lastScan ? "Finished" /* FINISHED */ : "Submitted" /* SUBMITTED */,
+        state: lastScan ? "FINISHED" : "UNKNOWN",
+        totalVulnerabilities: asset.vulnerabilityStats?.count || asset.vulnCount || 0
+      };
+      scans.push(scan);
+    }
+    return scans;
+  }
+  const scanListOutput = response?.scan_list_output || response?.SCAN_LIST_OUTPUT;
+  if (!scanListOutput) return scans;
+  const responseData = scanListOutput?.response || scanListOutput?.RESPONSE;
+  if (!responseData) return scans;
+  const scanList = responseData?.scan_list || responseData?.SCAN_LIST;
+  if (!scanList) return scans;
+  const scanArray = scanList?.scan || scanList?.SCAN;
+  if (!scanArray) return scans;
+  const scansToProcess = Array.isArray(scanArray) ? scanArray : [scanArray];
+  for (const scanData of scansToProcess) {
+    const scan = {
+      id: scanData?.ref || scanData?.REF || "",
+      scanRef: scanData?.ref || scanData?.REF || "",
+      title: scanData?.title || scanData?.TITLE || "",
+      type: "VM" /* VM */,
+      status: mapQualysStateToStatus(scanData?.state || scanData?.STATE),
+      state: scanData?.state || scanData?.STATE,
+      target: scanData?.target || scanData?.TARGET,
+      userLogin: scanData?.user_login || scanData?.USER_LOGIN,
+      assetGroupTitle: scanData?.asset_group_title || scanData?.ASSET_GROUP_TITLE,
+      launchDatetime: scanData?.launch_datetime ? new Date(scanData.launch_datetime) : void 0,
+      duration: scanData?.duration ? parseInt(scanData.duration) : void 0,
+      processed: scanData?.processed ? parseInt(scanData.processed) : void 0,
+      total: scanData?.total ? parseInt(scanData.total) : void 0
+    };
+    scans.push(scan);
+  }
+  return scans;
+}
+function parseWASScanList(response) {
+  const scans = [];
+  const scanData = response?.ServiceResponse?.data;
+  if (!scanData || !Array.isArray(scanData)) return scans;
+  for (const item of scanData) {
+    const wasScan = item.WasScan;
+    if (!wasScan) continue;
+    const scan = {
+      id: wasScan.id || "",
+      scanRef: wasScan.reference || `was/${wasScan.id}`,
+      title: wasScan.name || "Unnamed WAS Scan",
+      type: "WAS" /* WAS */,
+      status: mapWASStatusToStatus(wasScan.status),
+      state: wasScan.consolidatedStatus || wasScan.status,
+      target: wasScan.target?.webApp?.url || "N/A",
+      wasScanId: wasScan.id,
+      wasScanType: wasScan.type || "VULNERABILITY",
+      webAppId: wasScan.target?.webApp?.id,
+      webAppName: wasScan.target?.webApp?.name,
+      webAppUrl: wasScan.target?.webApp?.url,
+      launchDatetime: wasScan.launchedDate ? new Date(wasScan.launchedDate) : void 0,
+      duration: wasScan.summary?.testDuration || 0,
+      userLogin: wasScan.launchedBy?.username || "Unknown",
+      processed: wasScan.summary?.nbRequests || 0,
+      total: wasScan.summary?.linksCrawled || 0
+    };
+    scans.push(scan);
+  }
+  return scans;
+}
+function parseScanStatusResponse(response, scanRef) {
+  const scanList = response?.scan_list_output?.response?.scan_list?.scan;
+  if (!scanList) {
+    throw new Error("No scan list found in response");
+  }
+  const scans = Array.isArray(scanList) ? scanList : [scanList];
+  const scan = scans.find((s) => s.ref === scanRef);
+  if (!scan) {
+    throw new Error(`Scan with reference ${scanRef} not found in response`);
+  }
+  const state = scan.status?.state || "Unknown";
+  const status = mapQualysStateToStatus(state);
+  let duration;
+  if (scan.duration) {
+    if (typeof scan.duration === "string" && scan.duration.includes(":")) {
+      const parts = scan.duration.split(":");
+      duration = parseInt(parts[0]) * 3600 + parseInt(parts[1]) * 60 + parseInt(parts[2]);
+    } else {
+      duration = parseInt(scan.duration);
+    }
+  }
+  return {
+    status,
+    state,
+    processed: parseInt(scan.processed || "0"),
+    total: parseInt(scan.target?.ip?.split(",").length || "0"),
+    userLogin: scan.user_login,
+    startDatetime: scan.launch_datetime ? new Date(scan.launch_datetime) : void 0,
+    duration
+  };
+}
+function extractScanRefFromLaunchResponse(response) {
+  const itemList = response?.simple_return?.response?.item_list?.item;
+  if (!itemList) {
+    throw new Error("Invalid launch response: missing item_list");
+  }
+  const items = Array.isArray(itemList) ? itemList : [itemList];
+  const scanRefItem = items.find(
+    (item) => item.key?.toLowerCase() === "id" || item.key === "ID"
+  );
+  if (!scanRefItem || !scanRefItem.value) {
+    throw new Error("Invalid launch response: scan reference not found");
+  }
+  return scanRefItem.value;
+}
+function emptyReport(scanTitle) {
+  return {
+    scanTitle,
+    hostsScanned: 0,
+    totalVulnerabilities: 0,
+    criticalCount: 0,
+    highCount: 0,
+    mediumCount: 0,
+    lowCount: 0,
+    infoCount: 0,
+    vulnerabilities: [],
+    hosts: []
+  };
+}
+function parseQPSVulnerability(hostAssetVuln, hostInfo) {
+  const qid = parseInt(hostAssetVuln.qid || "0");
+  const severity = hostAssetVuln.severity ? parseInt(hostAssetVuln.severity) : 3;
+  return {
+    qid,
+    title: `QID-${qid}`,
+    severity,
+    ip: hostInfo.ip,
+    dns: hostInfo.dns,
+    netbios: hostInfo.netbios,
+    os: hostInfo.os,
+    port: hostAssetVuln.port ? parseInt(hostAssetVuln.port) : void 0,
+    protocol: hostAssetVuln.protocol,
+    ssl: hostAssetVuln.ssl === "true" || hostAssetVuln.ssl === true,
+    firstFound: hostAssetVuln.firstFound ? new Date(hostAssetVuln.firstFound) : void 0,
+    lastFound: hostAssetVuln.lastFound ? new Date(hostAssetVuln.lastFound) : void 0,
+    lastUpdate: hostAssetVuln.lastFound ? new Date(hostAssetVuln.lastFound) : void 0,
+    timesFound: 1,
+    results: hostAssetVuln.results || "",
+    status: hostAssetVuln.status || "Active"
+  };
+}
+function parseDetection(detection, hostInfo) {
+  const qid = parseInt(detection.qid || "0");
+  const severity = parseInt(detection.severity || "1");
+  const ssl = detection.ssl === "true" || detection.ssl === true;
+  let port;
+  let protocol;
+  if (detection.results) {
+    const portMatch = detection.results.match(/port\s+(\d+)/i);
+    if (portMatch) port = parseInt(portMatch[1]);
+    const protocolMatch = detection.results.match(/(tcp|udp)/i);
+    if (protocolMatch) protocol = protocolMatch[1].toUpperCase();
+  }
+  return {
+    qid,
+    title: `QID-${qid}`,
+    severity,
+    ip: hostInfo.ip,
+    dns: hostInfo.dns,
+    netbios: hostInfo.netbios,
+    os: hostInfo.os,
+    port,
+    protocol,
+    ssl,
+    firstFound: detection.first_found_datetime ? new Date(detection.first_found_datetime) : void 0,
+    lastFound: detection.last_found_datetime ? new Date(detection.last_found_datetime) : void 0,
+    lastUpdate: detection.last_update_datetime ? new Date(detection.last_update_datetime) : void 0,
+    timesFound: parseInt(detection.times_found || "1"),
+    results: detection.results,
+    status: detection.status || "Unknown"
+  };
+}
+function parseWASFinding(finding) {
+  const qid = parseInt(finding.qid || "0");
+  const severity = parseInt(finding.severity || "1");
+  return {
+    qid,
+    title: finding.name || `QID-${qid}`,
+    severity,
+    ip: finding.webApp?.url,
+    dns: finding.webApp?.name,
+    os: "Web Application",
+    protocol: "HTTPS",
+    ssl: true,
+    firstFound: finding.firstDetectedDate ? new Date(finding.firstDetectedDate) : void 0,
+    lastFound: finding.lastDetectedDate ? new Date(finding.lastDetectedDate) : void 0,
+    lastUpdate: finding.lastTestedDate ? new Date(finding.lastTestedDate) : void 0,
+    timesFound: 1,
+    results: `Finding Type: ${finding.type}, Finding ID: ${finding.id || finding.uniqueId}, Potential: ${finding.potential || "false"}`,
+    status: finding.status || "Unknown"
+  };
+}
+function incrementSeverityCount(counts, severity) {
+  switch (severity) {
+    case 5:
+      counts.critical++;
+      break;
+    case 4:
+      counts.high++;
+      break;
+    case 3:
+      counts.medium++;
+      break;
+    case 2:
+      counts.low++;
+      break;
+    case 1:
+      counts.info++;
+      break;
+  }
+}
+function mapQualysStateToStatus(state) {
+  if (!state) return "Submitted" /* SUBMITTED */;
+  const stateUpper = state.toUpperCase();
+  switch (stateUpper) {
+    case "FINISHED":
+      return "Finished" /* FINISHED */;
+    case "RUNNING":
+    case "PROCESSING":
+      return "Running" /* RUNNING */;
+    case "PAUSED":
+      return "Paused" /* PAUSED */;
+    case "CANCELED":
+    case "CANCELLED":
+      return "Canceled" /* CANCELED */;
+    case "ERROR":
+      return "Error" /* ERROR */;
+    case "QUEUED":
+    case "LOADING":
+    case "SUBMITTED":
+      return "Submitted" /* SUBMITTED */;
+    default:
+      return "Submitted" /* SUBMITTED */;
+  }
+}
+function mapWASStatusToStatus(status) {
+  if (!status) return "Submitted" /* SUBMITTED */;
+  const statusUpper = status.toUpperCase();
+  switch (statusUpper) {
+    case "FINISHED":
+    case "SUCCESS":
+      return "Finished" /* FINISHED */;
+    case "RUNNING":
+    case "PROCESSING":
+    case "SUBMITTED":
+    case "QUEUED":
+      return "Running" /* RUNNING */;
+    case "PAUSED":
+      return "Paused" /* PAUSED */;
+    case "CANCELED":
+    case "CANCELLED":
+      return "Canceled" /* CANCELED */;
+    case "ERROR":
+    case "FAILED":
+      return "Error" /* ERROR */;
+    default:
+      return "Submitted" /* SUBMITTED */;
+  }
+}
+function extractCVEList(cveList) {
+  if (!cveList || !cveList.cve) return [];
+  const cves = Array.isArray(cveList.cve) ? cveList.cve : [cveList.cve];
+  return cves.map((cve) => cve.id || cve).filter(Boolean);
+}
+function extractVendorReferences(vendorRefList) {
+  if (!vendorRefList || !vendorRefList.vendor_reference) return [];
+  const refs = Array.isArray(vendorRefList.vendor_reference) ? vendorRefList.vendor_reference : [vendorRefList.vendor_reference];
+  return refs.map((ref) => ref.id || ref).filter(Boolean);
+}
+function extractBugtraqList(bugtraqList) {
+  if (!bugtraqList || !bugtraqList.bugtraq) return [];
+  const ids = Array.isArray(bugtraqList.bugtraq) ? bugtraqList.bugtraq : [bugtraqList.bugtraq];
+  return ids.map((bug) => bug.id || bug).filter(Boolean);
+}
+function extractPCIReasons(pciReasons) {
+  if (!pciReasons || !pciReasons.pci_reason) return [];
+  return Array.isArray(pciReasons.pci_reason) ? pciReasons.pci_reason : [pciReasons.pci_reason];
+}
+function extractMalware(malware) {
+  if (!malware || !malware.mw_src) return void 0;
+  const sources = Array.isArray(malware.mw_src) ? malware.mw_src : [malware.mw_src];
+  const malwareNames = [];
+  for (const src of sources) {
+    if (src.mw_list?.mw_info) {
+      const infos = Array.isArray(src.mw_list.mw_info) ? src.mw_list.mw_info : [src.mw_list.mw_info];
+      infos.forEach((info) => {
+        if (info.mw_alias) malwareNames.push(info.mw_alias);
+      });
+    }
+  }
+  return malwareNames.length > 0 ? malwareNames.join(", ") : void 0;
+}
+
 // src/connectors/qualys/QualysConnector.ts
 var QualysConnector = class extends BaseConnector {
   constructor(qualysConfig) {
@@ -586,13 +1211,14 @@ var QualysConnector = class extends BaseConnector {
         username: qualysConfig.username,
         password: qualysConfig.password
       },
-      timeout: qualysConfig.timeout ?? 3e4,
-      retries: qualysConfig.retries ?? 3,
+      timeout: qualysConfig.timeout ?? QUALYS_DEFAULTS.REQUEST_TIMEOUT_MS,
+      retries: qualysConfig.retries ?? QUALYS_DEFAULTS.MAX_RETRIES,
       cache: qualysConfig.cache,
       dryRun: qualysConfig.dryRun,
       logger: "info" /* INFO */
     };
     super(config);
+    this.qualysConfig = qualysConfig;
   }
   // ============================================
   // Auth - Basic Auth (handled by BaseConnector)
@@ -601,74 +1227,454 @@ var QualysConnector = class extends BaseConnector {
   }
   async testConnection() {
     try {
-      await this.get("/api/2.0/fo/user/?action=list");
+      await this.makeFormRequest(QUALYS_VM_API_PATHS.SCAN_LIST, { action: "list" });
       return true;
     } catch {
       return false;
     }
   }
   // ============================================
-  // Asset Management
+  // VM Scan Operations (Production-tested)
+  // ============================================
+  /**
+   * Launch a VM (Vulnerability Management) scan
+   */
+  async launchVMScan(params) {
+    const requestParams = {
+      action: "launch",
+      scan_title: params.scanTitle
+    };
+    if (params.optionTitle) requestParams.option_title = params.optionTitle;
+    if (params.optionId) requestParams.option_id = params.optionId;
+    if (params.ip) requestParams.ip = params.ip;
+    if (params.assetGroups) requestParams.asset_groups = params.assetGroups;
+    if (params.assetGroupIds) requestParams.asset_group_ids = params.assetGroupIds;
+    if (params.excludeIpPerScan) requestParams.exclude_ip_per_scan = params.excludeIpPerScan;
+    if (params.priority !== void 0) requestParams.priority = params.priority;
+    if (params.iscannerName) requestParams.iscanner_name = params.iscannerName;
+    if (params.iscannerId) requestParams.iscanner_id = params.iscannerId;
+    if (params.defaultScanner !== void 0) requestParams.default_scanner = params.defaultScanner;
+    const response = await this.makeFormRequest(QUALYS_VM_API_PATHS.SCAN_LAUNCH, requestParams);
+    const scanRef = extractScanRefFromLaunchResponse(response);
+    return {
+      success: true,
+      data: {
+        scanRef,
+        scanTitle: params.scanTitle,
+        status: "Submitted" /* SUBMITTED */,
+        message: "Scan launched successfully"
+      },
+      timestamp: /* @__PURE__ */ new Date(),
+      connector: "qualys"
+    };
+  }
+  /**
+   * Get scan status
+   */
+  async getVMScanStatus(scanRef) {
+    const response = await this.makeFormRequest(QUALYS_VM_API_PATHS.SCAN_STATUS, {
+      action: "list",
+      scan_ref: scanRef
+    });
+    const scanInfo = parseScanStatusResponse(response, scanRef);
+    const progress = scanInfo.total > 0 ? Math.round(scanInfo.processed / scanInfo.total * 100) : 0;
+    return {
+      success: true,
+      data: {
+        scanRef,
+        status: scanInfo.status,
+        state: scanInfo.state,
+        processed: scanInfo.processed,
+        total: scanInfo.total,
+        progress,
+        startDatetime: scanInfo.startDatetime,
+        duration: scanInfo.duration,
+        userLogin: scanInfo.userLogin
+      },
+      timestamp: /* @__PURE__ */ new Date(),
+      connector: "qualys"
+    };
+  }
+  /**
+   * Cancel a running scan
+   */
+  async cancelVMScan(scanRef) {
+    await this.makeFormRequest(QUALYS_VM_API_PATHS.SCAN_CANCEL, {
+      action: "cancel",
+      scan_ref: scanRef
+    });
+    return {
+      success: true,
+      data: {
+        scanRef,
+        message: "Scan canceled successfully"
+      },
+      timestamp: /* @__PURE__ */ new Date(),
+      connector: "qualys"
+    };
+  }
+  /**
+   * List VM scans
+   */
+  async listVMScans(filters) {
+    try {
+      const requestParams = { action: "list" };
+      if (filters?.state) requestParams.state = filters.state;
+      if (filters?.scanRef) requestParams.scan_ref = filters.scanRef;
+      if (filters?.launchedAfterDatetime) requestParams.launched_after_datetime = filters.launchedAfterDatetime;
+      if (filters?.launchedBeforeDatetime) requestParams.launched_before_datetime = filters.launchedBeforeDatetime;
+      const response = await this.get(QUALYS_VM_API_PATHS.SCAN_LIST, requestParams);
+      const scans = parseVMScanList(response.data);
+      return {
+        success: true,
+        data: { scans },
+        timestamp: /* @__PURE__ */ new Date(),
+        connector: "qualys"
+      };
+    } catch (legacyError) {
+      const qpsResponse = await this.makeQPSRequest(QUALYS_VM_API_PATHS.QPS_HOST_ASSET, {
+        limitResults: 100,
+        filterCriteria: '<Criteria field="lastVulnScan" operator="GREATER">2000-01-01</Criteria>'
+      });
+      const scans = parseVMScanList(qpsResponse);
+      return {
+        success: true,
+        data: { scans },
+        timestamp: /* @__PURE__ */ new Date(),
+        connector: "qualys"
+      };
+    }
+  }
+  // ============================================
+  // Host Detections / Vulnerabilities (Production-tested)
+  // ============================================
+  /**
+   * Fetch host detections (vulnerabilities) from Qualys
+   * Uses hybrid approach: QPS API for asset_id, Legacy API for scan_ref
+   */
+  async fetchHostDetections(params) {
+    const requiresLegacyAPI = params.scanRef !== void 0;
+    const requiresQPSAPI = params.assetId !== void 0;
+    if (requiresQPSAPI || !requiresLegacyAPI) {
+      try {
+        let filterCriteria = '<Criteria field="vulnerabilityCount" operator="GREATER">0</Criteria>';
+        if (params.assetId) {
+          filterCriteria = `<Criteria field="id" operator="EQUALS">${params.assetId}</Criteria>`;
+        }
+        const response2 = await this.makeQPSRequest(QUALYS_VM_API_PATHS.QPS_HOST_ASSET, {
+          limitResults: 100,
+          filterCriteria
+        });
+        const parsed2 = parseHostDetections(response2, "Host Detections");
+        return {
+          success: true,
+          data: parsed2,
+          timestamp: /* @__PURE__ */ new Date(),
+          connector: "qualys"
+        };
+      } catch (qpsError) {
+        if (requiresQPSAPI) throw qpsError;
+      }
+    }
+    const requestParams = {
+      action: "list",
+      truncation_limit: QUALYS_DEFAULTS.TRUNCATION_LIMIT
+    };
+    if (params.scanRef) requestParams.scan_ref = params.scanRef;
+    if (params.ips) requestParams.ips = params.ips;
+    if (params.agIds) requestParams.ag_ids = params.agIds;
+    if (params.showIgs !== void 0) requestParams.show_igs = params.showIgs;
+    if (params.status) requestParams.status = params.status;
+    if (params.severities) requestParams.severities = params.severities;
+    const response = await this.makeFormRequest(QUALYS_VM_API_PATHS.HOST_DETECTIONS, requestParams);
+    const parsed = parseHostDetections(response, params.scanRef || "Host Detections");
+    return {
+      success: true,
+      data: parsed,
+      timestamp: /* @__PURE__ */ new Date(),
+      connector: "qualys"
+    };
+  }
+  /**
+   * Fetch vulnerability knowledge base data
+   */
+  async fetchVulnerabilityKB(qids) {
+    try {
+      const limitedQids = qids.slice(0, QUALYS_DEFAULTS.KB_FETCH_LIMIT);
+      const response = await this.makeFormRequest(QUALYS_VM_API_PATHS.VULN_KB, {
+        action: "list",
+        ids: limitedQids.join(","),
+        details: "All"
+      });
+      const kbMap = parseVulnerabilityKB(response);
+      return {
+        success: true,
+        data: kbMap,
+        timestamp: /* @__PURE__ */ new Date(),
+        connector: "qualys"
+      };
+    } catch (error) {
+      return {
+        success: true,
+        data: /* @__PURE__ */ new Map(),
+        timestamp: /* @__PURE__ */ new Date(),
+        connector: "qualys"
+      };
+    }
+  }
+  // ============================================
+  // WAS (Web Application Scanning) Operations
+  // ============================================
+  /**
+   * List WAS scans
+   */
+  async listWASScans(filters) {
+    let filterXml = "";
+    if (filters && Object.keys(filters).length > 0) {
+      filterXml = "<filters>" + Object.entries(filters).map(
+        ([key, value]) => `<Criteria field="${key}" operator="EQUALS">${value}</Criteria>`
+      ).join("") + "</filters>";
+    }
+    const response = await this.makeWASRequest(QUALYS_WAS_API_PATHS.WAS_SCAN_LIST, filterXml);
+    const scans = parseWASScanList(response);
+    return {
+      success: true,
+      data: { scans },
+      timestamp: /* @__PURE__ */ new Date(),
+      connector: "qualys"
+    };
+  }
+  /**
+   * List WAS findings (vulnerabilities)
+   */
+  async listWASFindings(filters) {
+    let filterXml = "";
+    if (filters && Object.keys(filters).length > 0) {
+      const criteriaElements = Object.entries(filters).map(([key, value]) => {
+        const field = key === "webAppId" ? "webApp.id" : key;
+        return `<Criteria field="${field}" operator="EQUALS">${value}</Criteria>`;
+      }).join("");
+      filterXml = `<filters>${criteriaElements}</filters>`;
+    }
+    const response = await this.makeWASRequest(QUALYS_WAS_API_PATHS.WAS_FINDINGS, filterXml);
+    const parsed = parseWASFindings(response, "WAS Findings");
+    return {
+      success: true,
+      data: parsed,
+      timestamp: /* @__PURE__ */ new Date(),
+      connector: "qualys"
+    };
+  }
+  // ============================================
+  // High-Level Operations
+  // ============================================
+  /**
+   * Get scan results with KB enrichment
+   */
+  async getScanResults(scanRef, enrichWithKB = true) {
+    const detectionsResponse = await this.fetchHostDetections({
+      scanRef,
+      showIgs: 0
+    });
+    if (!detectionsResponse.success || !detectionsResponse.data) {
+      return {
+        success: false,
+        data: void 0,
+        error: "Failed to fetch detections",
+        timestamp: /* @__PURE__ */ new Date(),
+        connector: "qualys"
+      };
+    }
+    let report = detectionsResponse.data;
+    if (enrichWithKB && report.vulnerabilities.length > 0) {
+      const uniqueQIDs = [...new Set(report.vulnerabilities.map((v) => v.qid))];
+      const kbResponse = await this.fetchVulnerabilityKB(uniqueQIDs);
+      if (kbResponse.success && kbResponse.data && kbResponse.data.size > 0) {
+        report = {
+          ...report,
+          vulnerabilities: enrichVulnerabilitiesWithKB(report.vulnerabilities, kbResponse.data)
+        };
+      }
+    }
+    return {
+      success: true,
+      data: report,
+      timestamp: /* @__PURE__ */ new Date(),
+      connector: "qualys"
+    };
+  }
+  /**
+   * Poll scan until completion
+   */
+  async pollScanUntilComplete(scanRef, options) {
+    const pollInterval = options?.pollIntervalMs || QUALYS_DEFAULTS.POLL_INTERVAL_MS;
+    const maxAttempts = options?.maxAttempts || QUALYS_DEFAULTS.MAX_POLL_ATTEMPTS;
+    let attempts = 0;
+    while (attempts < maxAttempts) {
+      const statusResponse = await this.getVMScanStatus(scanRef);
+      if (!statusResponse.success || !statusResponse.data) {
+        return {
+          success: false,
+          data: void 0,
+          error: "Failed to get scan status during polling",
+          timestamp: /* @__PURE__ */ new Date(),
+          connector: "qualys"
+        };
+      }
+      const status = statusResponse.data;
+      if (options?.onProgress) {
+        options.onProgress(status);
+      }
+      if (isQualysScanTerminal(status.status)) {
+        return statusResponse;
+      }
+      await this.delay(pollInterval);
+      attempts++;
+    }
+    return {
+      success: false,
+      data: void 0,
+      error: `Scan polling exceeded max attempts (${maxAttempts})`,
+      timestamp: /* @__PURE__ */ new Date(),
+      connector: "qualys"
+    };
+  }
+  /**
+   * Trigger scan and wait for results
+   */
+  async triggerScanAndWait(params, options) {
+    const launchResponse = await this.launchVMScan(params);
+    if (!launchResponse.success || !launchResponse.data) {
+      return {
+        success: false,
+        data: void 0,
+        error: "Failed to launch scan",
+        timestamp: /* @__PURE__ */ new Date(),
+        connector: "qualys"
+      };
+    }
+    const { scanRef } = launchResponse.data;
+    const finalStatus = await this.pollScanUntilComplete(scanRef, {
+      pollIntervalMs: options?.pollIntervalMs,
+      maxAttempts: options?.maxAttempts,
+      onProgress: options?.onProgress
+    });
+    if (!finalStatus.success || finalStatus.data?.status !== "Finished" /* FINISHED */) {
+      return {
+        success: false,
+        data: void 0,
+        error: `Scan did not complete successfully: ${finalStatus.data?.status || "Unknown"}`,
+        timestamp: /* @__PURE__ */ new Date(),
+        connector: "qualys"
+      };
+    }
+    return this.getScanResults(scanRef, options?.enrichWithKB ?? true);
+  }
+  // ============================================
+  // Asset Management (Original + Enhanced)
   // ============================================
   async getAssets(filter) {
-    const params = {
-      action: "list",
-      page: filter?.page ?? 1,
-      page_size: filter?.limit ?? 50
-    };
-    if (filter?.hostname) params["hostname"] = filter.hostname;
-    if (filter?.ipAddress) params["ips"] = filter.ipAddress;
-    if (filter?.os) params["os"] = filter.os;
-    if (filter?.tags) params["tag_name"] = filter.tags.join(",");
-    const response = await this.get(
-      "/api/2.0/fo/asset/host/",
-      params,
-      true
-      // use cache
-    );
-    if (response.data) {
+    try {
+      const response = await this.makeQPSRequest(QUALYS_VM_API_PATHS.QPS_HOST_ASSET, {
+        limitResults: filter?.limit || 100,
+        filterCriteria: ""
+      });
+      const serviceResponse = response?.ServiceResponse;
+      const hostAssets = serviceResponse?.data || [];
+      const assets = hostAssets.map((item) => {
+        const asset = item.HostAsset || item;
+        return {
+          id: asset.id || "",
+          hostname: asset.name || asset.hostname || "",
+          ipAddress: asset.address || asset.ip || "",
+          os: asset.os || asset.operatingSystem || "",
+          type: "Host",
+          lastSeen: asset.lastVulnScan || asset.vulnsUpdated || "",
+          vulnerabilityCount: asset.vulnerabilityStats?.count || asset.vulnCount || 0
+        };
+      });
       const paginated = this.buildPaginatedResponse(
-        response.data.assets,
-        response.data.total,
+        assets,
+        assets.length,
         { page: filter?.page, limit: filter?.limit }
       );
-      return { ...response, data: paginated };
+      return {
+        success: true,
+        data: paginated,
+        timestamp: /* @__PURE__ */ new Date(),
+        connector: "qualys"
+      };
+    } catch (error) {
+      return {
+        success: false,
+        data: void 0,
+        error: error.message,
+        timestamp: /* @__PURE__ */ new Date(),
+        connector: "qualys"
+      };
     }
-    return response;
   }
   async getAssetById(assetId) {
-    return this.get(
-      `/api/2.0/fo/asset/host/`,
-      { action: "list", ids: assetId }
-    );
+    const response = await this.makeQPSRequest(QUALYS_VM_API_PATHS.QPS_HOST_ASSET, {
+      limitResults: 1,
+      filterCriteria: `<Criteria field="id" operator="EQUALS">${assetId}</Criteria>`
+    });
+    const serviceResponse = response?.ServiceResponse;
+    const hostAssets = serviceResponse?.data || [];
+    if (hostAssets.length === 0) {
+      return {
+        success: false,
+        data: void 0,
+        error: "Asset not found",
+        timestamp: /* @__PURE__ */ new Date(),
+        connector: "qualys"
+      };
+    }
+    const asset = hostAssets[0].HostAsset || hostAssets[0];
+    return {
+      success: true,
+      data: {
+        id: asset.id || "",
+        hostname: asset.name || asset.hostname || "",
+        ipAddress: asset.address || asset.ip || "",
+        os: asset.os || asset.operatingSystem || "",
+        type: "Host",
+        lastSeen: asset.lastVulnScan || asset.vulnsUpdated || "",
+        vulnerabilityCount: asset.vulnerabilityStats?.count || asset.vulnCount || 0
+      },
+      timestamp: /* @__PURE__ */ new Date(),
+      connector: "qualys"
+    };
   }
   // ============================================
-  // Vulnerability Management
+  // Vulnerability Management (Original + Enhanced)
   // ============================================
   async getVulnerabilities(filter) {
-    const params = {
-      action: "list",
-      page: filter?.page ?? 1,
-      page_size: filter?.limit ?? 50
-    };
-    if (filter?.severity?.length) params["severities"] = filter.severity.join(",");
-    if (filter?.status?.length) params["status"] = filter.status.join(",");
-    if (filter?.hostname) params["hostname"] = filter.hostname;
-    if (filter?.ipAddress) params["ips"] = filter.ipAddress;
-    if (filter?.cve) params["cve_id"] = filter.cve;
-    const response = await this.get(
-      "/api/2.0/fo/asset/host/vm/detection/",
-      params
-    );
-    if (response.data) {
-      const paginated = this.buildPaginatedResponse(
-        response.data.vulnerabilities,
-        response.data.total,
-        { page: filter?.page, limit: filter?.limit }
-      );
-      return { ...response, data: paginated };
+    const detectionsParams = {};
+    if (filter?.severity?.length) detectionsParams.severities = filter.severity.join(",");
+    if (filter?.status?.length) detectionsParams.status = filter.status.join(",");
+    if (filter?.ipAddress) detectionsParams.ips = filter.ipAddress;
+    const response = await this.fetchHostDetections(detectionsParams);
+    if (!response.success || !response.data) {
+      return {
+        success: false,
+        data: void 0,
+        error: response.error || "Failed to fetch vulnerabilities",
+        timestamp: /* @__PURE__ */ new Date(),
+        connector: "qualys"
+      };
     }
-    return response;
+    const paginated = this.buildPaginatedResponse(
+      response.data.vulnerabilities,
+      response.data.totalVulnerabilities,
+      { page: filter?.page, limit: filter?.limit }
+    );
+    return {
+      success: true,
+      data: paginated,
+      timestamp: /* @__PURE__ */ new Date(),
+      connector: "qualys"
+    };
   }
   async getCriticalVulnerabilities() {
     return this.getVulnerabilities({
@@ -677,69 +1683,87 @@ var QualysConnector = class extends BaseConnector {
     });
   }
   // ============================================
-  // Scan Management
+  // Scan Management (Original - using new methods)
   // ============================================
   async getScans(filter) {
-    const params = {
-      action: "list",
-      page: filter?.page ?? 1,
-      page_size: filter?.limit ?? 50
-    };
-    if (filter?.status?.length) params["state"] = filter.status.join(",");
-    if (filter?.type) params["type"] = filter.type;
-    const response = await this.get(
-      "/api/2.0/fo/scan/",
-      params
-    );
-    if (response.data) {
-      const paginated = this.buildPaginatedResponse(
-        response.data.scans,
-        response.data.total,
-        { page: filter?.page, limit: filter?.limit }
-      );
-      return { ...response, data: paginated };
+    const response = await this.listVMScans(filter);
+    if (!response.success || !response.data) {
+      return {
+        success: false,
+        data: void 0,
+        error: response.error || "Failed to list scans",
+        timestamp: /* @__PURE__ */ new Date(),
+        connector: "qualys"
+      };
     }
-    return response;
+    const paginated = this.buildPaginatedResponse(
+      response.data.scans,
+      response.data.scans.length,
+      { page: filter?.page, limit: filter?.limit }
+    );
+    return {
+      success: true,
+      data: paginated,
+      timestamp: /* @__PURE__ */ new Date(),
+      connector: "qualys"
+    };
   }
   async launchScan(title, targetHosts, optionProfileId) {
-    return this.post("/api/2.0/fo/scan/", {
-      action: "launch",
-      scan_title: title,
+    const response = await this.launchVMScan({
+      scanTitle: title,
       ip: targetHosts.join(","),
-      option_id: optionProfileId
+      optionId: parseInt(optionProfileId)
     });
+    if (!response.success || !response.data) {
+      return {
+        success: false,
+        data: void 0,
+        error: response.error || "Failed to launch scan",
+        timestamp: /* @__PURE__ */ new Date(),
+        connector: "qualys"
+      };
+    }
+    return {
+      success: true,
+      data: {
+        id: response.data.scanRef,
+        scanRef: response.data.scanRef,
+        title: response.data.scanTitle,
+        status: response.data.status,
+        type: "VM" /* VM */,
+        target: targetHosts.join(",")
+      },
+      timestamp: /* @__PURE__ */ new Date(),
+      connector: "qualys"
+    };
   }
   async cancelScan(scanId) {
-    const response = await this.post("/api/2.0/fo/scan/", {
-      action: "cancel",
-      scan_ref: scanId
-    });
-    return response;
+    const response = await this.cancelVMScan(scanId);
+    return {
+      success: response.success,
+      data: void 0,
+      error: response.error,
+      timestamp: /* @__PURE__ */ new Date(),
+      connector: "qualys"
+    };
   }
   // ============================================
-  // Reports
+  // Reports (Original)
   // ============================================
   async getReports() {
-    const response = await this.get("/api/2.0/fo/report/", {
-      action: "list"
-    });
-    return response;
+    return this.get("/api/2.0/fo/report/", { action: "list" });
   }
   async downloadReport(reportId) {
-    const response = await this.get(`/api/2.0/fo/report/`, {
+    return this.get("/api/2.0/fo/report/", {
       action: "fetch",
       id: reportId
     });
-    return response;
   }
   // ============================================
-  // Compliance
+  // Compliance (Original)
   // ============================================
   async getComplianceControls() {
-    return this.get(
-      "/api/2.0/fo/compliance/control/",
-      { action: "list" }
-    );
+    return this.get("/api/2.0/fo/compliance/control/", { action: "list" });
   }
   // ============================================
   // Normalization - Maps to SDK standard format
@@ -751,14 +1775,14 @@ var QualysConnector = class extends BaseConnector {
     }
     const normalized = response.data.data.map(
       (vuln) => ({
-        id: vuln.qid,
+        id: String(vuln.qid),
         title: vuln.title,
         severity: this.mapSeverity(vuln.severity),
-        cvss: vuln.cvssV3 ?? vuln.cvssBase,
-        cve: vuln.cve?.[0],
-        affectedAsset: vuln.affectedHostname ?? vuln.affectedIp,
+        cvss: vuln.cvss3Base ?? vuln.cvssBase,
+        cve: vuln.cveList?.[0],
+        affectedAsset: vuln.dns ?? vuln.ip ?? "unknown",
         source: "qualys",
-        detectedAt: new Date(vuln.firstDetected),
+        detectedAt: vuln.firstFound ? new Date(vuln.firstFound) : /* @__PURE__ */ new Date(),
         raw: vuln
       })
     );
@@ -782,6 +1806,54 @@ var QualysConnector = class extends BaseConnector {
     return { ...response, data: normalized };
   }
   // ============================================
+  // Private HTTP Methods (Form-encoded for Qualys)
+  // ============================================
+  async makeFormRequest(endpoint, params) {
+    const formData = Object.entries(params).map(([key, value]) => `${encodeURIComponent(key)}=${encodeURIComponent(String(value))}`).join("&");
+    const response = await this.postRaw(endpoint, formData, {
+      "Content-Type": "application/x-www-form-urlencoded",
+      ...QUALYS_HEADERS.DEFAULT
+    });
+    return response.data;
+  }
+  async makeQPSRequest(endpoint, options) {
+    const xmlBody = `<ServiceRequest>
+      <preferences>
+        <limitResults>${options.limitResults || 100}</limitResults>
+      </preferences>
+      <filters>
+        ${options.filterCriteria || ""}
+      </filters>
+    </ServiceRequest>`;
+    const response = await this.postRaw(endpoint, xmlBody, {
+      "Content-Type": "text/xml",
+      "Accept": "application/json",
+      ...QUALYS_HEADERS.DEFAULT
+    });
+    return response.data;
+  }
+  async makeWASRequest(endpoint, filterXml = "") {
+    const xmlBody = `<ServiceRequest>${filterXml}</ServiceRequest>`;
+    const response = await this.postRaw(endpoint, xmlBody, {
+      "Content-Type": "text/xml",
+      "Accept": "application/json",
+      ...QUALYS_HEADERS.DEFAULT
+    });
+    return response.data;
+  }
+  // Post with raw body and custom headers
+  async postRaw(url, body, headers) {
+    const httpClient = this.httpClient;
+    const response = await httpClient.post(url, body, { headers });
+    return {
+      success: true,
+      data: response.data,
+      statusCode: response.status,
+      timestamp: /* @__PURE__ */ new Date(),
+      connector: "qualys"
+    };
+  }
+  // ============================================
   // Private Helpers
   // ============================================
   mapSeverity(severity) {
@@ -793,6 +1865,9 @@ var QualysConnector = class extends BaseConnector {
       1: "info"
     };
     return map[severity];
+  }
+  delay(ms) {
+    return new Promise((resolve) => setTimeout(resolve, ms));
   }
 };
 
@@ -5265,6 +6340,8 @@ export {
   OpenAIAgentsAdapter,
   PluginNotFoundError,
   QualysConnector,
+  QualysScanStatus,
+  QualysScanType,
   RateLimitError,
   RateLimiter,
   RetryHandler,
@@ -5292,6 +6369,9 @@ export {
   envHandler,
   hitlManager,
   isPrivateIP,
+  isQualysScanActive,
+  isQualysScanTerminal,
+  isValidQualysScanStatus,
   logger,
   mcpServer,
   normalizationEngine,
@@ -5300,6 +6380,7 @@ export {
   semanticSearch,
   tracer,
   validateAssets,
+  validateQualysScanStatus,
   validateVulnerabilities,
   withRetry
 };

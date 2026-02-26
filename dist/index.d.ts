@@ -245,10 +245,43 @@ declare class DuplicatePluginError extends SDKError {
     constructor(connectorName: string);
 }
 
+declare const QUALYS_BASE_URLS: {
+    readonly US1: "https://qualysapi.qualys.com";
+    readonly US2: "https://qualysapi.qg2.apps.qualys.com";
+    readonly US3: "https://qualysapi.qg3.apps.qualys.com";
+    readonly EU1: "https://qualysapi.qualys.eu";
+    readonly EU2: "https://qualysapi.qg2.apps.qualys.eu";
+    readonly IN1: "https://qualysapi.qg1.apps.qualys.in";
+    readonly CA1: "https://qualysapi.qg1.apps.qualys.ca";
+    readonly AE1: "https://qualysapi.qg1.apps.qualys.ae";
+};
+type QualysRegion = keyof typeof QUALYS_BASE_URLS;
+
+declare enum QualysScanStatus {
+    RUNNING = "Running",
+    PAUSED = "Paused",
+    FINISHED = "Finished",
+    ERROR = "Error",
+    CANCELED = "Canceled",
+    QUEUED = "Queued",
+    LOADING = "Loading",
+    SUBMITTED = "Submitted"
+}
+declare enum QualysScanType {
+    VM = "VM",
+    WAS = "WAS",
+    PC = "PC"
+}
+type QualysSeverity = 1 | 2 | 3 | 4 | 5;
+declare function validateQualysScanStatus(status: string): QualysScanStatus | null;
+declare function isValidQualysScanStatus(status: string): boolean;
+declare function isQualysScanTerminal(status: QualysScanStatus): boolean;
+declare function isQualysScanActive(status: QualysScanStatus): boolean;
 interface QualysConfig {
     baseUrl: string;
     username: string;
     password: string;
+    region?: QualysRegion;
     timeout?: number;
     retries?: number;
     cache?: {
@@ -256,6 +289,53 @@ interface QualysConfig {
         ttl: number;
     };
     dryRun?: boolean;
+    rejectUnauthorized?: boolean;
+}
+interface QualysVulnerability {
+    qid: number;
+    title: string;
+    severity: QualysSeverity;
+    ip?: string;
+    dns?: string;
+    netbios?: string;
+    os?: string;
+    port?: number;
+    protocol?: string;
+    ssl?: boolean;
+    firstFound?: Date;
+    lastFound?: Date;
+    lastUpdate?: Date;
+    timesFound?: number;
+    results?: string;
+    status?: string;
+    cvssBase?: number;
+    cvssTemporal?: number;
+    cvss3Base?: number;
+    cvss3Temporal?: number;
+    cveList?: string[];
+    vendorReferenceList?: string[];
+    bugtraqList?: string[];
+    threat?: string;
+    impact?: string;
+    solution?: string;
+    diagnosis?: string;
+    consequence?: string;
+    pciFlag?: boolean;
+    pciReasons?: string[];
+    category?: string;
+    exploitability?: string;
+    associatedMalware?: string;
+    patchable?: boolean;
+}
+interface QualysHostDetection {
+    hostId: string;
+    ip: string;
+    dns?: string;
+    netbios?: string;
+    os?: string;
+    trackingMethod?: string;
+    lastScanDatetime?: Date;
+    detections: QualysVulnerability[];
 }
 interface QualysAsset {
     id: string;
@@ -269,6 +349,7 @@ interface QualysAsset {
     netbiosName?: string;
     dnsName?: string;
     agentId?: string;
+    vulnerabilityCount?: number;
 }
 interface QualysAssetListResponse {
     assets: QualysAsset[];
@@ -276,43 +357,83 @@ interface QualysAssetListResponse {
     page: number;
     limit: number;
 }
-type QualysSeverity = 1 | 2 | 3 | 4 | 5;
-interface QualysVulnerability {
-    qid: string;
-    title: string;
-    severity: QualysSeverity;
-    cvssBase?: number;
-    cvssV3?: number;
-    cve?: string[];
-    affectedHostname: string;
-    affectedIp: string;
-    firstDetected: string;
-    lastDetected: string;
-    status: 'Active' | 'Fixed' | 'New' | 'Re-Opened';
-    category?: string;
-    solution?: string;
-    description?: string;
-}
-interface QualysVulnListResponse {
-    vulnerabilities: QualysVulnerability[];
-    total: number;
-    page: number;
-    limit: number;
-}
-type QualysScanStatus = 'Running' | 'Finished' | 'Paused' | 'Cancelled' | 'Error';
 interface QualysScan {
     id: string;
+    scanRef: string;
     title: string;
     status: QualysScanStatus;
-    type: 'Vulnerability' | 'Compliance' | 'Web Application';
-    launchedAt: string;
-    completedAt?: string;
-    targetHosts?: string[];
+    state?: string;
+    type: QualysScanType;
+    target?: string;
+    launchDatetime?: Date;
+    startDatetime?: Date;
+    endDatetime?: Date;
     duration?: number;
+    processed?: number;
+    total?: number;
+    userLogin?: string;
+    assetGroupTitle?: string;
+    assetGroupId?: string;
+    scannerApplianceType?: string;
+    wasScanId?: string;
+    wasScanType?: string;
+    webAppId?: string;
+    webAppName?: string;
+    webAppUrl?: string;
+    totalVulnerabilities?: number;
+    criticalCount?: number;
+    highCount?: number;
+    mediumCount?: number;
+    lowCount?: number;
+    infoCount?: number;
 }
 interface QualysScanListResponse {
     scans: QualysScan[];
     total: number;
+}
+interface QualysLaunchScanParams {
+    scanTitle: string;
+    optionTitle?: string;
+    optionId?: number;
+    ip?: string;
+    assetGroups?: string;
+    assetGroupIds?: string;
+    excludeIpPerScan?: string;
+    priority?: number;
+    iscannerName?: string;
+    iscannerId?: number;
+    defaultScanner?: number;
+}
+interface QualysLaunchScanResponse {
+    scanRef: string;
+    scanTitle: string;
+    status: QualysScanStatus;
+    message?: string;
+}
+interface QualysScanStatusResponse {
+    scanRef: string;
+    status: QualysScanStatus;
+    state: string;
+    processed: number;
+    total: number;
+    progress: number;
+    startDatetime?: Date;
+    endDatetime?: Date;
+    duration?: number;
+    userLogin?: string;
+}
+interface QualysFetchDetectionsParams {
+    scanRef?: string;
+    assetId?: string;
+    ips?: string;
+    agIds?: string;
+    showIgs?: number;
+    status?: string;
+    severities?: string;
+}
+interface QualysFetchKBParams {
+    qids: number[];
+    details?: 'Basic' | 'All';
 }
 interface QualysReport {
     id: string;
@@ -322,6 +443,29 @@ interface QualysReport {
     createdAt: string;
     size?: number;
     format: 'PDF' | 'HTML' | 'XML' | 'CSV' | 'DOCX';
+}
+interface QualysParsedReport {
+    scanTitle: string;
+    scanDate?: Date;
+    hostsScanned: number;
+    totalVulnerabilities: number;
+    criticalCount: number;
+    highCount: number;
+    mediumCount: number;
+    lowCount: number;
+    infoCount: number;
+    vulnerabilities: QualysVulnerability[];
+    hosts: QualysHostInfo[];
+}
+interface QualysHostInfo {
+    id?: string;
+    ip?: string;
+    dns?: string;
+    netbios?: string;
+    os?: string;
+    trackingMethod?: string;
+    lastScanDatetime?: Date;
+    url?: string;
 }
 interface QualysComplianceControl {
     id: string;
@@ -351,15 +495,164 @@ interface QualysAssetFilter {
 }
 interface QualysScanFilter {
     status?: QualysScanStatus[];
-    type?: string;
+    state?: string;
+    type?: QualysScanType;
+    scanRef?: string;
+    launchedAfterDatetime?: string;
+    launchedBeforeDatetime?: string;
     page?: number;
     limit?: number;
 }
+interface QualysWASScan {
+    id: string;
+    reference: string;
+    name: string;
+    type: string;
+    status: string;
+    consolidatedStatus?: string;
+    target?: {
+        webApp?: {
+            id: string;
+            name: string;
+            url: string;
+        };
+    };
+    launchedDate?: Date;
+    launchedBy?: {
+        username: string;
+    };
+    summary?: {
+        testDuration?: number;
+        nbRequests?: number;
+        linksCrawled?: number;
+    };
+}
+interface QualysWASFinding {
+    id: string;
+    uniqueId?: string;
+    qid: number;
+    name: string;
+    type: string;
+    severity: QualysSeverity;
+    status: string;
+    firstDetectedDate?: Date;
+    lastDetectedDate?: Date;
+    lastTestedDate?: Date;
+    potential?: boolean;
+    webApp?: {
+        id: string;
+        name: string;
+        url: string;
+    };
+}
+interface QualysWASFilter {
+    status?: string;
+    webAppId?: number;
+    severity?: number;
+    qid?: number;
+}
+interface QualysKBEntry {
+    qid: number;
+    title: string;
+    vulnType?: string;
+    severityLevel: number;
+    category?: string;
+    publishedDatetime?: string;
+    patchable: boolean;
+    diagnosis?: string;
+    consequence?: string;
+    solution?: string;
+    cvssBase?: number;
+    cvssTemporal?: number;
+    cvss3Base?: number;
+    cvss3Temporal?: number;
+    cveList: string[];
+    vendorReferenceList: string[];
+    bugtraqList: string[];
+    pciFlag: boolean;
+    pciReasons: string[];
+    exploitability?: string;
+    associatedMalware?: string;
+}
+interface QualysVulnListResponse {
+    vulnerabilities: QualysVulnerability[];
+    total: number;
+    page: number;
+    limit: number;
+}
+interface QualysAPIResponse<T> {
+    success: boolean;
+    data?: T;
+    error?: string;
+    errorDescription?: string;
+}
 
 declare class QualysConnector extends BaseConnector {
+    private qualysConfig;
     constructor(qualysConfig: QualysConfig);
     authenticate(): Promise<void>;
     testConnection(): Promise<boolean>;
+    /**
+     * Launch a VM (Vulnerability Management) scan
+     */
+    launchVMScan(params: QualysLaunchScanParams): Promise<ConnectorResponse<QualysLaunchScanResponse>>;
+    /**
+     * Get scan status
+     */
+    getVMScanStatus(scanRef: string): Promise<ConnectorResponse<QualysScanStatusResponse>>;
+    /**
+     * Cancel a running scan
+     */
+    cancelVMScan(scanRef: string): Promise<ConnectorResponse<{
+        scanRef: string;
+        message: string;
+    }>>;
+    /**
+     * List VM scans
+     */
+    listVMScans(filters?: QualysScanFilter): Promise<ConnectorResponse<{
+        scans: QualysScan[];
+    }>>;
+    /**
+     * Fetch host detections (vulnerabilities) from Qualys
+     * Uses hybrid approach: QPS API for asset_id, Legacy API for scan_ref
+     */
+    fetchHostDetections(params: QualysFetchDetectionsParams): Promise<ConnectorResponse<QualysParsedReport>>;
+    /**
+     * Fetch vulnerability knowledge base data
+     */
+    fetchVulnerabilityKB(qids: number[]): Promise<ConnectorResponse<Map<number, QualysKBEntry>>>;
+    /**
+     * List WAS scans
+     */
+    listWASScans(filters?: QualysWASFilter): Promise<ConnectorResponse<{
+        scans: QualysScan[];
+    }>>;
+    /**
+     * List WAS findings (vulnerabilities)
+     */
+    listWASFindings(filters?: QualysWASFilter): Promise<ConnectorResponse<QualysParsedReport>>;
+    /**
+     * Get scan results with KB enrichment
+     */
+    getScanResults(scanRef: string, enrichWithKB?: boolean): Promise<ConnectorResponse<QualysParsedReport>>;
+    /**
+     * Poll scan until completion
+     */
+    pollScanUntilComplete(scanRef: string, options?: {
+        pollIntervalMs?: number;
+        maxAttempts?: number;
+        onProgress?: (status: QualysScanStatusResponse) => void;
+    }): Promise<ConnectorResponse<QualysScanStatusResponse>>;
+    /**
+     * Trigger scan and wait for results
+     */
+    triggerScanAndWait(params: QualysLaunchScanParams, options?: {
+        pollIntervalMs?: number;
+        maxAttempts?: number;
+        enrichWithKB?: boolean;
+        onProgress?: (status: QualysScanStatusResponse) => void;
+    }): Promise<ConnectorResponse<QualysParsedReport>>;
     getAssets(filter?: QualysAssetFilter): Promise<ConnectorResponse<PaginatedResponse<QualysAsset>>>;
     getAssetById(assetId: string): Promise<ConnectorResponse<QualysAsset>>;
     getVulnerabilities(filter?: QualysVulnFilter): Promise<ConnectorResponse<PaginatedResponse<QualysVulnerability>>>;
@@ -372,7 +665,12 @@ declare class QualysConnector extends BaseConnector {
     getComplianceControls(): Promise<ConnectorResponse<QualysComplianceControl[]>>;
     getNormalizedVulnerabilities(filter?: QualysVulnFilter): Promise<ConnectorResponse<NormalizedVulnerability[]>>;
     getNormalizedAssets(filter?: QualysAssetFilter): Promise<ConnectorResponse<NormalizedAsset[]>>;
+    private makeFormRequest;
+    private makeQPSRequest;
+    private makeWASRequest;
+    private postRaw;
     private mapSeverity;
+    private delay;
 }
 
 interface SentinelOneConfig {
@@ -2354,4 +2652,4 @@ declare const agentWorkflow: AgentWorkflow;
 declare const SDK_VERSION = "0.1.0";
 declare const SDK_NAME = "@skill-mine/complyment-connectors-sdk";
 
-export { APIError, AgentOrchestrator, AgentWorkflow, type ApiKeyAuthConfig, type AuditAction, type AuditEntry, AuditLogger, type AuditStatus, type AuthConfig, type AuthResult, AuthType, AuthenticationError, BaseConnector, type BasicAuthConfig, type BearerAuthConfig, CacheLayer, type CacheOptions, type CheckpointConfig, CheckpointConnector, type CheckpointGateway, type CheckpointGatewayStatus, type CheckpointGroup, type CheckpointHost, type CheckpointHostFilter, type CheckpointLog, type CheckpointLogFilter, type CheckpointNetwork, type CheckpointPolicy, type CheckpointRule, type CheckpointRuleAction, type CheckpointRuleFilter, type CheckpointSession, type CheckpointThreat, type CheckpointThreatSeverity, CircuitBreaker, CircuitBreakerOpenError, type CircuitBreakerOptions, type CircuitBreakerStats, type CircuitState, type ComputerStatus, ConfigurationError, ConnectionError, type ConnectorConfig, ConnectorEvent, ConnectorRegistry, type ConnectorResponse, ConnectorStatus, type DeploymentStatus, DuplicatePluginError, EnvHandler, HITLManager, type HITLRequest, type HITLRiskLevel, type HITLStatus, type HealthCheckResult, InvalidCredentialsError, type JiraComment, type JiraConfig, JiraConnector, type JiraCreateIssueRequest, type JiraIssue, type JiraIssueFilter, type JiraIssueListResponse, type JiraIssuePriority, type JiraIssueStatus, type JiraIssueType, type JiraProject, type JiraSprint, type JiraSprintState, type JiraTransition, type JiraUpdateIssueRequest, type JiraUser, LangChainAdapter, type LangChainTool, type LogEntry, LogLevel, Logger, type LoggerOptions, MCPServer, type MCPTool, type MCPToolResult, type ManageEngineComputer, type ManageEngineComputerFilter, type ManageEngineComputerListResponse, type ManageEngineConfig, ManageEngineConnector, type ManageEngineDeployment, type ManageEngineDeploymentFilter, type ManageEnginePatch, type ManageEnginePatchFilter, type ManageEnginePatchListResponse, type ManageEngineVulnerability, type MitigationAction, type MitigationRequest, type MitigationResponse, NormalizationEngine, type NormalizationResult, type NormalizedAsset, type NormalizedThreat, type NormalizedVulnerability, NotFoundError, type OAuth2Config, type OAuth2TokenRequest, type OpenAIAgentDefinition, type OpenAIAgentTool, OpenAIAgentsAdapter, type PaginatedResponse, type PaginationOptions, type PatchSeverity, type PatchStatus, PluginNotFoundError, type QualysAsset, type QualysAssetFilter, type QualysAssetListResponse, type QualysComplianceControl, type QualysConfig, QualysConnector, type QualysReport, type QualysScan, type QualysScanFilter, type QualysScanListResponse, type QualysScanStatus, type QualysSeverity, type QualysVulnFilter, type QualysVulnListResponse, type QualysVulnerability, RateLimitError, type RateLimitOptions, RateLimiter, RetryHandler, type RetryOptions, SDKError, SDK_NAME, SDK_VERSION, type SemanticDocument, SemanticSearch, type SemanticSearchResult, type SentinelOneActivity, type SentinelOneAgent, type SentinelOneAgentFilter, type SentinelOneAgentListResponse, type SentinelOneAgentStatus, type SentinelOneConfidenceLevel, type SentinelOneConfig, SentinelOneConnector, type SentinelOneGroup, type SentinelOneSite, type SentinelOneThreat, type SentinelOneThreatFilter, type SentinelOneThreatListResponse, type SentinelOneThreatStatus, SlidingWindowRateLimiter, type Span, type SpanOptions, StreamManager, type TelemetryOptions, TimeoutError, TokenExpiredError, type TokenResponse, Tracer, ValidationError, type VaultAuthConfig, VaultHandler, VercelAIAdapter, type VercelAITool, type VercelAIToolSet, WebhookManager, type WorkflowDefinition, type WorkflowExecution, type WorkflowResult, type ZohoAccount, type ZohoConfig, ZohoConnector, type ZohoContact, type ZohoContactFilter, type ZohoContactListResponse, type ZohoDeal, type ZohoDealFilter, type ZohoDealStage, type ZohoLead, type ZohoLeadFilter, type ZohoLeadStatus, type ZohoSearchResponse, type ZohoTask, type ZohoTaskStatus, agentWorkflow, auditLogger, createQualysMCPTools, createSentinelOneMCPTools, cvssToSeverity, detectAssetType, envHandler, hitlManager, isPrivateIP, logger, mcpServer, normalizationEngine, orchestrator, registry, semanticSearch, tracer, validateAssets, validateVulnerabilities, withRetry };
+export { APIError, AgentOrchestrator, AgentWorkflow, type ApiKeyAuthConfig, type AuditAction, type AuditEntry, AuditLogger, type AuditStatus, type AuthConfig, type AuthResult, AuthType, AuthenticationError, BaseConnector, type BasicAuthConfig, type BearerAuthConfig, CacheLayer, type CacheOptions, type CheckpointConfig, CheckpointConnector, type CheckpointGateway, type CheckpointGatewayStatus, type CheckpointGroup, type CheckpointHost, type CheckpointHostFilter, type CheckpointLog, type CheckpointLogFilter, type CheckpointNetwork, type CheckpointPolicy, type CheckpointRule, type CheckpointRuleAction, type CheckpointRuleFilter, type CheckpointSession, type CheckpointThreat, type CheckpointThreatSeverity, CircuitBreaker, CircuitBreakerOpenError, type CircuitBreakerOptions, type CircuitBreakerStats, type CircuitState, type ComputerStatus, ConfigurationError, ConnectionError, type ConnectorConfig, ConnectorEvent, ConnectorRegistry, type ConnectorResponse, ConnectorStatus, type DeploymentStatus, DuplicatePluginError, EnvHandler, HITLManager, type HITLRequest, type HITLRiskLevel, type HITLStatus, type HealthCheckResult, InvalidCredentialsError, type JiraComment, type JiraConfig, JiraConnector, type JiraCreateIssueRequest, type JiraIssue, type JiraIssueFilter, type JiraIssueListResponse, type JiraIssuePriority, type JiraIssueStatus, type JiraIssueType, type JiraProject, type JiraSprint, type JiraSprintState, type JiraTransition, type JiraUpdateIssueRequest, type JiraUser, LangChainAdapter, type LangChainTool, type LogEntry, LogLevel, Logger, type LoggerOptions, MCPServer, type MCPTool, type MCPToolResult, type ManageEngineComputer, type ManageEngineComputerFilter, type ManageEngineComputerListResponse, type ManageEngineConfig, ManageEngineConnector, type ManageEngineDeployment, type ManageEngineDeploymentFilter, type ManageEnginePatch, type ManageEnginePatchFilter, type ManageEnginePatchListResponse, type ManageEngineVulnerability, type MitigationAction, type MitigationRequest, type MitigationResponse, NormalizationEngine, type NormalizationResult, type NormalizedAsset, type NormalizedThreat, type NormalizedVulnerability, NotFoundError, type OAuth2Config, type OAuth2TokenRequest, type OpenAIAgentDefinition, type OpenAIAgentTool, OpenAIAgentsAdapter, type PaginatedResponse, type PaginationOptions, type PatchSeverity, type PatchStatus, PluginNotFoundError, type QualysAPIResponse, type QualysAsset, type QualysAssetFilter, type QualysAssetListResponse, type QualysComplianceControl, type QualysConfig, QualysConnector, type QualysFetchDetectionsParams, type QualysFetchKBParams, type QualysHostDetection, type QualysHostInfo, type QualysKBEntry, type QualysLaunchScanParams, type QualysLaunchScanResponse, type QualysParsedReport, type QualysReport, type QualysScan, type QualysScanFilter, type QualysScanListResponse, QualysScanStatus, type QualysScanStatusResponse, QualysScanType, type QualysSeverity, type QualysVulnFilter, type QualysVulnListResponse, type QualysVulnerability, type QualysWASFilter, type QualysWASFinding, type QualysWASScan, RateLimitError, type RateLimitOptions, RateLimiter, RetryHandler, type RetryOptions, SDKError, SDK_NAME, SDK_VERSION, type SemanticDocument, SemanticSearch, type SemanticSearchResult, type SentinelOneActivity, type SentinelOneAgent, type SentinelOneAgentFilter, type SentinelOneAgentListResponse, type SentinelOneAgentStatus, type SentinelOneConfidenceLevel, type SentinelOneConfig, SentinelOneConnector, type SentinelOneGroup, type SentinelOneSite, type SentinelOneThreat, type SentinelOneThreatFilter, type SentinelOneThreatListResponse, type SentinelOneThreatStatus, SlidingWindowRateLimiter, type Span, type SpanOptions, StreamManager, type TelemetryOptions, TimeoutError, TokenExpiredError, type TokenResponse, Tracer, ValidationError, type VaultAuthConfig, VaultHandler, VercelAIAdapter, type VercelAITool, type VercelAIToolSet, WebhookManager, type WorkflowDefinition, type WorkflowExecution, type WorkflowResult, type ZohoAccount, type ZohoConfig, ZohoConnector, type ZohoContact, type ZohoContactFilter, type ZohoContactListResponse, type ZohoDeal, type ZohoDealFilter, type ZohoDealStage, type ZohoLead, type ZohoLeadFilter, type ZohoLeadStatus, type ZohoSearchResponse, type ZohoTask, type ZohoTaskStatus, agentWorkflow, auditLogger, createQualysMCPTools, createSentinelOneMCPTools, cvssToSeverity, detectAssetType, envHandler, hitlManager, isPrivateIP, isQualysScanActive, isQualysScanTerminal, isValidQualysScanStatus, logger, mcpServer, normalizationEngine, orchestrator, registry, semanticSearch, tracer, validateAssets, validateQualysScanStatus, validateVulnerabilities, withRetry };

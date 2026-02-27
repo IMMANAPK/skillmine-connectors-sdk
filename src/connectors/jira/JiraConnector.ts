@@ -104,7 +104,13 @@ export class JiraConnector extends BaseConnector {
       if (filter?.createdBefore) jqlParts.push(`created <= "${filter.createdBefore}"`)
     }
 
-    const jql = jqlParts.length ? jqlParts.join(' AND ') : 'ORDER BY created DESC'
+    // New /rest/api/3/search/jql requires bounded queries - must have at least one filter
+    // Add default filter if none provided (last 365 days)
+    if (jqlParts.length === 0) {
+      jqlParts.push('created >= -365d')
+    }
+
+    const jql = jqlParts.join(' AND ') + ' ORDER BY created DESC'
 
     // Using new /rest/api/3/search/jql endpoint with GET method
     // Reference: https://developer.atlassian.com/changelog/#CHANGE-2046

@@ -2440,7 +2440,10 @@ var JiraConnector = class extends BaseConnector {
       if (filter?.createdAfter) jqlParts.push(`created >= "${filter.createdAfter}"`);
       if (filter?.createdBefore) jqlParts.push(`created <= "${filter.createdBefore}"`);
     }
-    const jql = jqlParts.length ? jqlParts.join(" AND ") : "ORDER BY created DESC";
+    if (jqlParts.length === 0) {
+      jqlParts.push("created >= -365d");
+    }
+    const jql = jqlParts.join(" AND ") + " ORDER BY created DESC";
     const fields = [
       "summary",
       "description",

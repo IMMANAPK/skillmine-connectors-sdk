@@ -36,6 +36,12 @@ export * from './connectors/jira/types'
 export { ZohoConnector } from './connectors/zoho/ZohoConnector'
 export * from './connectors/zoho/types'
 
+export { TenableIoConnector } from './connectors/tenable-io/TenableIoConnector'
+export * from './connectors/tenable-io/types'
+
+export { TenableScConnector } from './connectors/tenable-sc/TenableScConnector'
+export * from './connectors/tenable-sc/types'
+
 // ============================================
 // Auth
 // ============================================

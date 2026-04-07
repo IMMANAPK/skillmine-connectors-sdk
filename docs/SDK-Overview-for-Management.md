@@ -60,43 +60,81 @@ The Complyment Connectors SDK provides:
 
 ## Architecture
 
+```mermaid
+flowchart TB
+    classDef layerBox fill:#f8fbff,stroke:#cbd5e1,stroke-width:2px,color:#334155,rx:10,ry:10
+    classDef appNode fill:#eff6ff,stroke:#3b82f6,stroke-width:2px,color:#1e3a8a,rx:5,ry:5
+    classDef aiNode fill:#fdf4ff,stroke:#d946ef,stroke-width:2px,color:#701a75,rx:5,ry:5
+    classDef svcNode fill:#fefce8,stroke:#eab308,stroke-width:2px,color:#713f12,rx:5,ry:5
+    classDef coreNode fill:#fef2f2,stroke:#ef4444,stroke-width:2px,color:#7f1d1d,rx:5,ry:5
+    classDef connNode fill:#f0fdf4,stroke:#22c55e,stroke-width:2px,color:#14532d,rx:5,ry:5
+    classDef mdwNode fill:#fff7ed,stroke:#f97316,stroke-width:2px,color:#7c2d12,rx:5,ry:5
+    classDef extNode fill:#f3f4f6,stroke:#64748b,stroke-width:2px,stroke-dasharray: 5 5,color:#0f172a,rx:5,ry:5
+
+    subgraph AppLayer ["🚀 Application Layer"]
+        direction LR
+        UserApp["💻 User Apps"]:::appNode
+        CLI["⌨️ CLI Tools"]:::appNode
+        Web["🌐 Web Apps"]:::appNode
+    end
+
+    subgraph AILayer ["🧠 AI Agents Layer"]
+        direction LR
+        MCP["⚙️ MCP Server"]:::aiNode
+        LangChain["🦜️🔗 LangChain"]:::aiNode
+        VercelAI["▲ Vercel AI"]:::aiNode
+        HITL["👤 HITL Manager"]:::aiNode
+    end
+
+    subgraph ServiceLayer ["⚙️ Services & Middleware"]
+        direction LR
+        Norm["🔄 Normalizer"]:::svcNode
+        Audit["📝 Auditing"]:::svcNode
+        CB["🔌 Circuit Breaker"]:::mdwNode
+        RL["🚦 Rate Limiter"]:::mdwNode
+        Cache["💾 Cache Layer"]:::mdwNode
+    end
+
+    subgraph CoreLayer ["🏗️ Core Framework"]
+        direction LR
+        Base["📦 BaseConnector"]:::coreNode
+        Registry["📋 Registry"]:::coreNode
+        HTTP["🌐 HTTP Client"]:::coreNode
+    end
+
+    subgraph ConnectorLayer ["🔌 Connectors"]
+        direction LR
+        Qualys["🛡️ Qualys"]:::connNode
+        S1["🛡️ SentinelOne"]:::connNode
+        Jira["🎫 Jira"]:::connNode
+        Zoho["🤝 Zoho"]:::connNode
+        More["➕ 4+ Others"]:::connNode
+    end
+
+    subgraph ExternalLayer ["🌍 External Third-Party APIs"]
+        direction LR
+        QAPI("Qualys API"):::extNode
+        S1API("S1 API"):::extNode
+        JAPI("Jira API"):::extNode
+    end
+
+    %% Connections
+    AppLayer ==>|"Consumes SDK"| AILayer
+    AppLayer ==>|"Direct Invocation"| ServiceLayer
+    AILayer ==>|"Executes Tools"| ServiceLayer
+    
+    ServiceLayer ==>|"Uses"| CoreLayer
+    CoreLayer ==>|"Manages"| ConnectorLayer
+    
+    Qualys -.->|"HTTPS"| QAPI
+    S1 -.->|"HTTPS"| S1API
+    Jira -.->|"HTTPS"| JAPI
+    
+    %% Styles
+    class AppLayer,AILayer,ServiceLayer,CoreLayer,ConnectorLayer,ExternalLayer layerBox
 ```
-@skill-mine/complyment-connectors-sdk
-│
-├── Core Layer
-│   ├── BaseConnector (HTTP, Auth, Error handling)
-│   ├── ConnectorRegistry (Global connector management)
-│   └── Type Definitions (Full TypeScript support)
-│
-├── Middleware Layer
-│   ├── CircuitBreaker (Fault tolerance)
-│   ├── RateLimiter (API quota management)
-│   ├── RetryHandler (Exponential backoff)
-│   └── CacheLayer (Response caching)
-│
-├── Connectors Layer
-│   ├── Qualys, SentinelOne, Checkpoint
-│   ├── ManageEngine, Jira, Zoho
-│   └── (Extensible for new connectors)
-│
-├── AI Integration Layer
-│   ├── MCP Server (Model Context Protocol)
-│   ├── LangChain Adapter
-│   ├── Vercel AI Adapter
-│   ├── OpenAI Agents Adapter
-│   └── HITL Manager (Human-in-the-loop)
-│
-├── Data Layer
-│   ├── NormalizationEngine (Unified schemas)
-│   ├── SemanticSearch (TF-IDF based search)
-│   └── AuditLogger (Compliance logging)
-│
-└── Infrastructure Layer
-    ├── OpenTelemetry Tracer
-    ├── Structured Logger
-    ├── Webhook Manager
-    └── Secrets Handler (Vault + Env)
-```
+
+*For more in-depth diagrams, including Data Flow, Class Hierarchies, and AI integration workflows, please refer to the [Detailed Architecture Guide](./Detailed-Architecture.md).*
 
 ---
 

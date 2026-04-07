@@ -1,0 +1,28 @@
+{
+  "vulnerabilities": [
+    {{#eachArray count}}
+    {
+      "id": "vuln-{{id}}",
+      "qid": {{qid}},
+      "title": "Vulnerability {{title}}",
+      "severity": {{severity}},
+      "cvss": {{cvss}},
+      "cve": "CVE-2024-{{cve}}",
+      "ip": "192.168.1.{{ip}}",
+      "hostname": "server-{{hostname}}",
+      "operatingSystem": "Ubuntu 22.04 LTS",
+      "lastFound": "2024-03-15T10:30:00Z",
+      "status": "Active",
+      "category": "Security",
+      "solution": "Update to latest version"
+    }{{#unless @last}},{{/unless}}
+    {{/eachArray}}
+  ],
+  "count": {{count}},
+  "severitySummary": {
+    "critical": {{critical}},
+    "high": {{high}},
+    "medium": {{medium}},
+    "low": {{low}}
+  }
+}

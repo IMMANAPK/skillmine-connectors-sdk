@@ -1,0 +1,61 @@
+{
+  "threats": [
+    {
+      "id": "threat-001",
+      "name": "Trojan.GenericKD.46789",
+      "threatType": "Trojan",
+      "severity": "critical",
+      "status": "active",
+      "filePath": "C:\\Windows\\System32\\malware.dll",
+      "md5": "d41d8cd98f00b204e9800998ecf8427e",
+      "createdAt": "2024-03-20T14:30:00Z",
+      "agent": {
+        "id": "agent-001",
+        "hostname": "DESKTOP-XYZ",
+        "ip": "192.168.1.50",
+        "os": "Windows 11 Pro"
+      },
+      "mitigationStatus": "not mitigated"
+    },
+    {
+      "id": "threat-002",
+      "name": "Ransomware.Cryptor.A",
+      "threatType": "Ransomware",
+      "severity": "critical",
+      "status": "active",
+      "filePath": "C:\\Users\\admin\\Documents\\encrypted.txt",
+      "md5": "5d41402abc4b2a76b9719d911017c592",
+      "createdAt": "2024-03-19T09:15:00Z",
+      "agent": {
+        "id": "agent-002",
+        "hostname": "SERVER-ABC",
+        "ip": "192.168.1.100",
+        "os": "Windows Server 2022"
+      },
+      "mitigationStatus": "not mitigated"
+    },
+    {
+      "id": "threat-003",
+      "name": "Adware.Bundler.YYG",
+      "threatType": "Adware",
+      "severity": "medium",
+      "status": "active",
+      "filePath": "C:\\Program Files\\Adware\\adware.exe",
+      "md5": "098f6bcd4621d373cade4e832627b4f6",
+      "createdAt": "2024-03-18T11:00:00Z",
+      "agent": {
+        "id": "agent-003",
+        "hostname": "WORKSTATION-123",
+        "ip": "192.168.1.75",
+        "os": "Windows 10 Enterprise"
+      },
+      "mitigationStatus": "quarantined"
+    }
+  ],
+  "totalCount": 3,
+  "pagination": {
+    "page": 1,
+    "pageSize": 50,
+    "totalPages": 1
+  }
+}

@@ -1,0 +1,46 @@
+{
+  "vulnerabilities": [
+    {
+      "pluginId": 19506,
+      "name": "Nginx < 1.24.0 Multiple Vulnerabilities",
+      "description": "Nginx before 1.24.0 is vulnerable to multiple issues including HTTP request smuggling",
+      "severity": 4,
+      "cvss": 9.1,
+      "cvss3": 9.8,
+      "cve": ["CVE-2024-24989", "CVE-2024-32760"],
+      "host": "10.0.0.5",
+      "hostname": "app-server-01",
+      "protocol": "TCP",
+      "port": 443,
+      "pluginFamily": "Web Servers",
+      "firstSeen": "2024-03-15T10:00:00Z",
+      "lastSeen": "2024-03-20T14:00:00Z",
+      "solution": "Upgrade to Nginx 1.24.0 or later"
+    },
+    {
+      "pluginId": 95123,
+      "name": "OpenSSL 3.0.x < 3.0.13 Multiple Vulnerabilities",
+      "description": "OpenSSL 3.0.x before 3.0.13 is vulnerable to multiple issues",
+      "severity": 4,
+      "cvss": 8.1,
+      "cvss3": 8.5,
+      "cve": ["CVE-2024-12797", "CVE-2024-12798"],
+      "host": "10.0.0.10",
+      "hostname": "db-server-01",
+      "protocol": "TCP",
+      "port": 443,
+      "pluginFamily": "Operating Systems",
+      "firstSeen": "2024-03-10T08:00:00Z",
+      "lastSeen": "2024-03-20T12:00:00Z",
+      "solution": "Upgrade to OpenSSL 3.0.13 or later"
+    }
+  ],
+  "total": 2,
+  "severitySummary": {
+    "critical": 0,
+    "high": 2,
+    "medium": 0,
+    "low": 0,
+    "info": 0
+  }
+}

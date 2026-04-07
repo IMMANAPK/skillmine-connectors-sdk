@@ -1,0 +1,51 @@
+{
+  "vulnerabilities": [
+    {
+      "id": "vuln-001",
+      "qid": 12345,
+      "title": "SQL Injection in Login Form",
+      "severity": 5,
+      "cvss": 9.8,
+      "cve": "CVE-2024-12345",
+      "ip": "192.168.1.10",
+      "hostname": "web-server-01",
+      "operatingSystem": "Ubuntu 22.04 LTS",
+      "lastFound": "2024-03-15T10:30:00Z",
+      "status": "Active",
+      "category": "Injection",
+      "solution": "Update to latest version"
+    },
+    {
+      "id": "vuln-002",
+      "qid": 12346,
+      "title": "Cross-Site Scripting (XSS)",
+      "severity": 4,
+      "cvss": 7.5,
+      "cve": "CVE-2024-12346",
+      "ip": "192.168.1.11",
+      "hostname": "web-server-02",
+      "operatingSystem": "Windows Server 2022",
+      "lastFound": "2024-03-14T08:15:00Z",
+      "status": "Active",
+      "category": "XSS",
+      "solution": "Sanitize user inputs"
+    },
+    {
+      "id": "vuln-003",
+      "qid": 12347,
+      "title": "Outdated OpenSSL Library",
+      "severity": 3,
+      "cvss": 5.3,
+      "cve": "CVE-2024-12347",
+      "ip": "192.168.1.20",
+      "hostname": "db-server-01",
+      "operatingSystem": "CentOS 8",
+      "lastFound": "2024-03-10T14:00:00Z",
+      "status": "Active",
+      "category": "Obsolete Software",
+      "solution": "Update OpenSSL"
+    }
+  ],
+  "count": 3,
+  "warnings": []
+}

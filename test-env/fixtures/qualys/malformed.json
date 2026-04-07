@@ -1,0 +1,21 @@
+{
+  "vulnerabilities": [
+    {
+      "id": "vuln-malformed-001",
+      "qid": "not-a-number",
+      "title": 12345,
+      "severity": "invalid-severity",
+      "cvss": "not-a-number",
+      "cve": ["not-a-string"],
+      "ip": null,
+      "hostname": "",
+      "operatingSystem": false,
+      "lastFound": "invalid-date",
+      "status": 12345,
+      "category": null,
+      "solution": undefined
+    }
+  ],
+  "count": "one",
+  "warnings": { "unexpected": "object instead of array" }
+}

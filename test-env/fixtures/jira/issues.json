@@ -1,0 +1,52 @@
+{
+  "issues": [
+    {
+      "id": "10001",
+      "key": "SEC-001",
+      "summary": "Critical CVE-2024-44228 detected on prod-app-01",
+      "description": "Log4j vulnerability (CVSS 10.0) detected on production server",
+      "priority": "Highest",
+      "status": "Open",
+      "assignee": "security-team",
+      "reporter": "qualys-connector",
+      "created": "2024-03-20T09:00:00Z",
+      "updated": "2024-03-20T14:30:00Z",
+      "labels": ["security", "critical", "cve"],
+      "project": "SEC",
+      "issueType": "Bug"
+    },
+    {
+      "id": "10002",
+      "key": "SEC-002",
+      "summary": "Ransomware activity detected on DESKTOP-XYZ",
+      "description": "SentinelOne detected ransomware behavior, immediate action required",
+      "priority": "Highest",
+      "status": "In Progress",
+      "assignee": "incident-response",
+      "reporter": "sentinelone-connector",
+      "created": "2024-03-19T15:30:00Z",
+      "updated": "2024-03-20T10:00:00Z",
+      "labels": ["security", "critical", "ransomware", "incident"],
+      "project": "SEC",
+      "issueType": "Task"
+    },
+    {
+      "id": "10003",
+      "key": "SEC-003",
+      "summary": "Outdated OpenSSL on 12 servers",
+      "description": "Multiple production servers running vulnerable OpenSSL version",
+      "priority": "High",
+      "status": "Open",
+      "assignee": "infrastructure-team",
+      "reporter": "tenable-connector",
+      "created": "2024-03-18T11:00:00Z",
+      "updated": "2024-03-18T11:00:00Z",
+      "labels": ["security", "high", "patching"],
+      "project": "SEC",
+      "issueType": "Task"
+    }
+  ],
+  "total": 3,
+  "maxResults": 50,
+  "startAt": 0
+}

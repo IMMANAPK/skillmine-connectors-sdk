@@ -1,0 +1,41 @@
+{
+  "vulnerabilities": [
+    {
+      "id": "vuln-critical-001",
+      "qid": 90001,
+      "title": "Remote Code Execution via Apache Log4j",
+      "severity": 5,
+      "cvss": 10.0,
+      "cve": "CVE-2021-44228",
+      "ip": "192.168.1.100",
+      "hostname": "prod-app-01",
+      "operatingSystem": "RHEL 8.5",
+      "lastFound": "2024-03-20T09:00:00Z",
+      "status": "Active",
+      "category": "Remote Code Execution",
+      "solution": "Apply Log4j 2.17.0 or later"
+    },
+    {
+      "id": "vuln-critical-002",
+      "qid": 90002,
+      "title": "Privilege Escalation via Sudo",
+      "severity": 5,
+      "cvss": 9.1,
+      "cve": "CVE-2021-3156",
+      "ip": "192.168.1.101",
+      "hostname": "prod-app-02",
+      "operatingSystem": "Ubuntu 20.04 LTS",
+      "lastFound": "2024-03-19T15:30:00Z",
+      "status": "Active",
+      "category": "Privilege Escalation",
+      "solution": "Update sudo to 1.9.5p2 or later"
+    }
+  ],
+  "count": 2,
+  "severitySummary": {
+    "critical": 2,
+    "high": 0,
+    "medium": 0,
+    "low": 0
+  }
+}

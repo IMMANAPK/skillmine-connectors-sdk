@@ -4,7 +4,7 @@
 
 A TypeScript SDK that abstracts 8+ enterprise security tool integrations with built-in AI agent compatibility, circuit breakers, rate limiting, and human-in-the-loop controls.
 
-[![npm version](https://img.shields.io/badge/npm-0.1.0-blue)](https://www.npmjs.com/package/@skill-mine/complyment-connectors-sdk)
+[![npm version](https://img.shields.io/badge/npm-0.3.0-blue)](https://www.npmjs.com/package/@skill-mine/complyment-connectors-sdk)
 [![TypeScript](https://img.shields.io/badge/TypeScript-5.x-blue)](https://www.typescriptlang.org/)
 [![Build](https://img.shields.io/badge/build-passing-brightgreen)](#)
 [![License](https://img.shields.io/badge/license-MIT-green)](#)
@@ -14,7 +14,7 @@ A TypeScript SDK that abstracts 8+ enterprise security tool integrations with bu
 ## Features
 
 - **8 Connectors** — Qualys, SentinelOne, Checkpoint, ManageEngine, Jira, Zoho, Tenable.io, Tenable.sc
-- **AI Agent Ready** — MCP, LangChain, Vercel AI SDK, OpenAI Agents SDK
+- **AI Agent Ready** — MCP, LangChain, Vercel AI SDK, OpenAI Agents SDK, Google ADK
 - **Resilience** — Circuit breaker, retry with backoff, rate limiting, caching
 - **Observability** — OpenTelemetry tracing, structured logging, audit logs
 - **Security** — Human-in-the-loop approvals for critical actions
@@ -227,6 +227,23 @@ const agent = OpenAIAgentsAdapter.createSecurityAnalystAgent({
 // agent.tools ready for OpenAI Agents SDK
 ```
 
+### Google ADK (Gemini / Vertex AI)
+```typescript
+import { GoogleADKAdapter } from '@skill-mine/complyment-connectors-sdk'
+
+// Pre-built security analyst agent config for Google ADK
+const agentConfig = GoogleADKAdapter.createSecurityAnalystAgent({
+  qualys, sentinelone, jira,
+})
+// agentConfig.tools ready for Google Agent Development Kit
+
+// Or build a full tool set from all connectors
+const tools = GoogleADKAdapter.createFullToolSet({ qualys, sentinelone, checkpoint, jira })
+
+// Convert to Vertex AI function calling format
+const vertexFunctions = GoogleADKAdapter.toVertexAIFunction(tools)
+```
+
 ---
 
 ## Human-in-the-Loop (HITL)
@@ -430,6 +447,7 @@ dist/
     ├── LangChain     (LangChain tool adapters)
     ├── Vercel AI     (Vercel AI SDK tool adapters)
     ├── OpenAI Agents (OpenAI Agents SDK adapters)
+    ├── Google ADK    (Google Agent Development Kit / Vertex AI adapters)
     ├── HITL          (Human-in-the-loop approval system)
     ├── Orchestration (Multi-agent workflow orchestration)
     ├── Semantic      (TF-IDF semantic search on security data)

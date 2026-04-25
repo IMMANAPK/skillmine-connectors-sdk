@@ -20,6 +20,19 @@ export * from './core/errors'
 
 export { QualysConnector } from './connectors/qualys/QualysConnector'
 export * from './connectors/qualys/types'
+export * from './connectors/qualys/constants'
+export {
+    parseHostDetections,
+    parseVMDRFindings,
+    emptyReport,
+    parseWASFindings,
+    parseVulnerabilityKB,
+    enrichVulnerabilitiesWithKB,
+    parseVMScanList,
+    parseWASScanList,
+    parseScanStatusResponse,
+    extractScanRefFromLaunchResponse,
+} from './connectors/qualys/parser'
 
 export { SentinelOneConnector } from './connectors/sentinelone/SentinelOneConnector'
 export * from './connectors/sentinelone/types'
@@ -38,9 +51,11 @@ export * from './connectors/zoho/types'
 
 export { TenableIoConnector } from './connectors/tenable-io/TenableIoConnector'
 export * from './connectors/tenable-io/types'
+export * from './connectors/tenable-io/constants'
 
 export { TenableScConnector } from './connectors/tenable-sc/TenableScConnector'
 export * from './connectors/tenable-sc/types'
+export * from './connectors/tenable-sc/constants'
 
 // ============================================
 // Auth
@@ -144,6 +159,13 @@ export { OpenAIAgentsAdapter } from './ai/openai-agents/OpenAIAgentsAdapter'
 export type { OpenAIAgentTool, OpenAIAgentDefinition } from './ai/openai-agents/OpenAIAgentsAdapter'
 
 // ============================================
+// AI - Google ADK
+// ============================================
+
+export { GoogleADKAdapter, googleADKAdapter } from './ai/google-adk/GoogleADKAdapter'
+export type { GoogleADKTool, GoogleADKToolParam, GoogleADKToolResult, GoogleADKAgentConfig } from './ai/google-adk/GoogleADKAdapter'
+
+// ============================================
 // AI - HITL
 // ============================================
 
@@ -175,5 +197,5 @@ export type { WorkflowResult } from './ai/workflows/AgentWorkflow'
 // SDK Version
 // ============================================
 
-export const SDK_VERSION = '0.1.0'
+export const SDK_VERSION = '0.3.0'
 export const SDK_NAME = '@skill-mine/complyment-connectors-sdk'

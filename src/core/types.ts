@@ -8,7 +8,6 @@ export enum AuthType {
   BASIC = 'basic',
   OAUTH2 = 'oauth2',
   BEARER = 'bearer',
-  VAULT = 'vault',
 }
 
 // Connector Status
@@ -60,19 +59,11 @@ export interface BearerAuthConfig {
   token: string
 }
 
-export interface VaultAuthConfig {
-  type: AuthType.VAULT
-  vaultUrl: string
-  secretPath: string
-  token: string
-}
-
 export type AuthConfig =
   | ApiKeyAuthConfig
   | BasicAuthConfig
   | OAuth2Config
   | BearerAuthConfig
-  | VaultAuthConfig
 
 // ============================================
 // Connector Config

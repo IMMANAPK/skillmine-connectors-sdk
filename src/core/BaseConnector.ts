@@ -183,6 +183,9 @@ export abstract class BaseConnector extends EventEmitter {
                 reqConfig.headers = reqConfig.headers ?? {}
                 reqConfig.headers['Authorization'] = `Bearer ${this.accessToken}`
                 break
+
+            default:
+                throw new ConfigurationError(`Unsupported auth type: ${(auth as { type?: string }).type ?? 'unknown'}`, this.config.name)
         }
     }
 
@@ -199,7 +202,8 @@ export abstract class BaseConnector extends EventEmitter {
 
         // Check cache
         if (useCache && this.config.cache?.enabled) {
-            const cached = this.getFromCache<T>(url)
+            const cacheKey = this.createCacheKey('GET', url, params)
+            const cached = this.getFromCache<T>(cacheKey)
             if (cached) {
                 this.emit(ConnectorEvent.CACHE_HIT, { url })
                 return {
@@ -219,7 +223,8 @@ export abstract class BaseConnector extends EventEmitter {
             const response = await this.httpClient.get<T>(url, { params })
 
             if (useCache && this.config.cache?.enabled) {
-                this.setCache(url, response.data)
+                const cacheKey = this.createCacheKey('GET', url, params)
+                this.setCache(cacheKey, response.data)
             }
 
             this.emit(ConnectorEvent.DATA_FETCHED, { url, connector: this.config.name })
@@ -429,6 +434,14 @@ export abstract class BaseConnector extends EventEmitter {
             expiresAt: new Date(now.getTime() + ttl),
             createdAt: now,
         })
+    }
+
+    private createCacheKey(
+        method: string,
+        url: string,
+        params?: Record<string, unknown>,
+    ): string {
+        return `${method}:${url}:${JSON.stringify(params ?? {})}`
     }
 
     private evictOldestCacheEntries(count: number): void {

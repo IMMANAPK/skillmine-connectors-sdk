@@ -79,7 +79,7 @@ export class CacheLayer {
 
   set<T>(key: string, data: T, ttlSeconds?: number): void {
     // Evict if at max size
-    if (this.store.size >= this.maxSize) {
+    if (!this.store.has(key) && this.store.size >= this.maxSize) {
       this.evictLRU()
     }
 

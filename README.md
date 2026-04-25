@@ -7,7 +7,7 @@ A TypeScript SDK that abstracts 8+ enterprise security tool integrations with bu
 [![npm version](https://img.shields.io/badge/npm-0.3.0-blue)](https://www.npmjs.com/package/@skill-mine/complyment-connectors-sdk)
 [![TypeScript](https://img.shields.io/badge/TypeScript-5.x-blue)](https://www.typescriptlang.org/)
 [![Build](https://img.shields.io/badge/build-passing-brightgreen)](#)
-[![License](https://img.shields.io/badge/license-MIT-green)](#)
+[![License](https://img.shields.io/badge/license-ISC-green)](#)
 
 ---
 
@@ -42,15 +42,9 @@ import {
 
 // Initialize connectors
 const qualys = new QualysConnector({
-  name: 'qualys',
   baseUrl: 'https://qualysapi.qualys.com',
-  auth: {
-    type: 'basic',
-    credentials: {
-      username: process.env.QUALYS_USERNAME!,
-      password: process.env.QUALYS_PASSWORD!,
-    },
-  },
+  username: process.env.QUALYS_USERNAME!,
+  password: process.env.QUALYS_PASSWORD!,
 })
 
 // Register globally
@@ -71,7 +65,7 @@ const qualys = new QualysConnector({ ...config })
 
 await qualys.getAssets({ hostname: 'web-server-01' })
 await qualys.getCriticalVulnerabilities()
-await qualys.launchScan({ scannerName: 'External Scanner', title: 'Weekly Scan' })
+await qualys.launchScan('Weekly Scan', ['203.0.113.10'], '12345')
 await qualys.getNormalizedVulnerabilities()
 ```
 
@@ -286,10 +280,7 @@ await hitl.approve(request.id, 'john.doe@skill-mine.com')
 // Opens after 5 failures, recovers after 60s
 const qualys = new QualysConnector({
   ...config,
-  circuitBreaker: {
-    failureThreshold: 5,
-    recoveryTimeMs: 60000,
-  },
+  // Circuit breaker opens automatically after repeated request failures.
 })
 ```
 
@@ -298,8 +289,8 @@ const qualys = new QualysConnector({
 const qualys = new QualysConnector({
   ...config,
   rateLimit: {
-    maxRequests: 100,
-    windowMs: 60000, // 100 req/min
+    requests: 100,
+    perSeconds: 60,
   },
 })
 ```
@@ -308,11 +299,7 @@ const qualys = new QualysConnector({
 ```typescript
 const qualys = new QualysConnector({
   ...config,
-  retry: {
-    maxRetries: 3,
-    initialDelayMs: 1000,
-    backoffMultiplier: 2,
-  },
+  retries: 3,
 })
 ```
 
@@ -322,8 +309,7 @@ const qualys = new QualysConnector({
   ...config,
   cache: {
     enabled: true,
-    ttlMs: 300000, // 5 minutes
-    maxSize: 1000,
+    ttl: 300, // 5 minutes
   },
 })
 ```
@@ -465,6 +451,20 @@ dist/
 
 ---
 
+## Quality Checks
+```bash
+npm run typecheck
+npm test
+npm run test:bench
+npm run eval:quick
+npm run pack:dry
+
+# Run the full local gate
+npm run verify
+```
+
+---
+
 ## Author
 
 **Immanuvel** — Backend Developer, Skill-Mine Technology Consulting
@@ -474,4 +474,4 @@ Built as internal tooling for the Complyment compliance platform serving 50+ ent
 
 ## License
 
-MIT
+ISC

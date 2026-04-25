@@ -83,6 +83,13 @@ export function detectAssetType(
     ) return 'server'
 
     if (
+        h.includes('aws') ||
+        h.includes('azure') ||
+        h.includes('gcp') ||
+        h.includes('cloud')
+    ) return 'cloud'
+
+    if (
         h.includes('ws') ||
         h.includes('desktop') ||
         h.includes('laptop') ||
@@ -97,13 +104,6 @@ export function detectAssetType(
         h.includes('switch') ||
         h.includes('firewall')
     ) return 'network'
-
-    if (
-        h.includes('aws') ||
-        h.includes('azure') ||
-        h.includes('gcp') ||
-        h.includes('cloud')
-    ) return 'cloud'
 
     return 'unknown'
 }
@@ -125,5 +125,13 @@ export function isPrivateIP(ip: string): boolean {
 export function isValidIP(ip: string): boolean {
     const ipv4 = /^(\d{1,3}\.){3}\d{1,3}$/
     const ipv6 = /^([0-9a-fA-F]{1,4}:){7}[0-9a-fA-F]{1,4}$/
-    return ipv4.test(ip) || ipv6.test(ip)
+
+    if (ipv4.test(ip)) {
+        return ip.split('.').every((part) => {
+            const value = Number(part)
+            return Number.isInteger(value) && value >= 0 && value <= 255
+        })
+    }
+
+    return ipv6.test(ip)
 }

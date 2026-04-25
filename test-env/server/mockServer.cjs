@@ -269,6 +269,7 @@ function startMockServer(port = DEFAULT_MOCK_CONFIG.port) {
 module.exports = {
   app,
   configureMockServer,
+  getMockResponse,
   getMockConfig,
   startMockServer,
   DEFAULT_MOCK_CONFIG,
